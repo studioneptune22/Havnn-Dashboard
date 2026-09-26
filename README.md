@@ -78,6 +78,24 @@ position, colonne générée).
 Seules les colonnes connues sont conservées et `company_id` est toujours injecté par le serveur.
 Dans les extraits IA (`ai_snippet`), entourez les mentions de la marque de `**…**` pour les surligner.
 
+## Bilan vidéo mensuel (HyperFrames)
+
+La page `/dashboard/rapports` affiche une vidéo « Bilan GEO du mois » (17 s, 1920×1080) construite avec
+[HyperFrames](https://hyperframes.heygen.com) : une composition HTML + GSAP dans
+`public/hyperframes/bilan-mensuel/index.html`, lue dans le dashboard par le web component `@hyperframes/player`.
+
+- Les chiffres (score, présence IA, note Google, NAP, part de voix) viennent des mêmes données que le cockpit et sont
+  passés à la composition en paramètres d'URL (`src/lib/hyperframes.ts`).
+- Les variables sont aussi déclarées sur la composition (`data-composition-variables`) pour le rendu MP4 :
+
+```bash
+npm run video:preview   # studio de prévisualisation HyperFrames
+npm run video:check     # lint + runtime + layout + contraste
+npm run video:render    # → renders/bilan-mensuel.mp4 (Node ≥ 22 + FFmpeg)
+npx --yes hyperframes@0.8.78 render public/hyperframes/bilan-mensuel -o renders/client.mp4 \
+  --variables '{"company":"Mon entreprise","month":"Octobre 2026","score":78,"scoreDelta":6}'
+```
+
 ## Structure
 
 ```
@@ -97,6 +115,7 @@ src/
 │  ├─ supabase/              # clients serveur / admin / middleware
 │  └─ data/                  # queries.ts (Supabase ou mock), mock.ts, period.ts
 └─ types/database.ts
+public/hyperframes/bilan-mensuel/   # composition vidéo HyperFrames (GSAP embarqué)
 supabase/schema.sql · supabase/seed.sql
 ```
 

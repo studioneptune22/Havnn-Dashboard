@@ -7,9 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "video:preview": "npx --yes hyperframes@0.8.78 preview public/hyperframes/bilan-mensuel",
+    "video:check": "npx --yes hyperframes@0.8.78 check public/hyperframes/bilan-mensuel",
+    "video:render": "npx --yes hyperframes@0.8.78 render public/hyperframes/bilan-mensuel -o renders/bilan-mensuel.mp4"
   },
   "dependencies": {
+    "@hyperframes/player": "^0.8.78",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-label": "^2.1.15",
     "@radix-ui/react-progress": "^1.1.16",

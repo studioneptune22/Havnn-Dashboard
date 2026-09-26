@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { FileBarChart, FileSignature, FileSpreadsheet, FileText, Lock, Map, type LucideIcon } from "lucide-react";
+import { Clapperboard, FileBarChart, FileSignature, FileSpreadsheet, FileText, Lock, Map, type LucideIcon } from "lucide-react";
 
 import { DownloadButton } from "@/components/dashboard/download-button";
+import { MonthlyRecapVideo } from "@/components/dashboard/monthly-recap-video";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getDocuments, getSession } from "@/lib/data/queries";
+import { getCockpitData, getDocuments, getSession } from "@/lib/data/queries";
+import { monthlyRecapSrc } from "@/lib/hyperframes";
 import { formatBytes, formatDate } from "@/lib/utils";
 import type { DocumentCategory } from "@/types/database";
 
@@ -24,7 +26,15 @@ const monthFmt = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeri
 
 export default async function RapportsPage() {
   const { company, demo } = await getSession();
-  const documents = await getDocuments(company.id);
+  const [documents, cockpit] = await Promise.all([getDocuments(company.id), getCockpitData(company.id, "3m")]);
+  const recapSrc = cockpit.latest
+    ? monthlyRecapSrc({
+        companyName: company.name,
+        latest: cockpit.latest,
+        previous: cockpit.previous,
+        shareOfVoice: cockpit.shareOfVoice,
+      })
+    : null;
 
   const reports = documents.filter((d) => d.category === "monthly_report");
   const vault = documents.filter((d) => d.category !== "monthly_report");
@@ -37,6 +47,26 @@ export default async function RapportsPage() {
         title="Documents & Rapports"
         description="Retrouvez vos rapports mensuels de performance GEO et l'ensemble des documents de votre accompagnement."
       />
+
+      {/* ------------------------------------------------------ Bilan vidéo (HyperFrames) */}
+      {recapSrc && (
+        <section className="mb-4">
+          <Card>
+            <CardHeader className="flex-row items-center gap-3 space-y-0">
+              <div className="grid h-9 w-9 place-items-center rounded-lg border bg-background/50">
+                <Clapperboard className="h-4 w-4 text-havnn-blue" />
+              </div>
+              <div className="space-y-1">
+                <CardTitle className="text-base">Bilan vidéo du mois</CardTitle>
+                <CardDescription>Vos résultats GEO en 17 secondes — à partager avec votre équipe.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <MonthlyRecapVideo src={recapSrc} className="mx-auto max-w-4xl" />
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* ------------------------------------------------------ Rapports mensuels */}
       <section className="grid gap-4 lg:grid-cols-3">

@@ -1,0 +1,421 @@
+<!doctype html>
+<html
+  lang="fr"
+  data-composition-variables='[
+    {"id":"company","type":"string","label":"Entreprise","default":"Atelier Vogel Paysage"},
+    {"id":"month","type":"string","label":"Mois","default":"Septembre 2026"},
+    {"id":"score","type":"number","label":"Score de Dominance (%)","default":72},
+    {"id":"scoreDelta","type":"number","label":"Évolution du score (pts)","default":6},
+    {"id":"presence","type":"number","label":"Présence IA (%)","default":58},
+    {"id":"presenceDelta","type":"number","label":"Évolution présence (pts)","default":6},
+    {"id":"rating","type":"number","label":"Note Google","default":4.8},
+    {"id":"reviewsNew","type":"number","label":"Nouveaux avis","default":14},
+    {"id":"napErrors","type":"number","label":"Erreurs NAP","default":2},
+    {"id":"sov","type":"string","label":"Part de voix (nom|mentions|client;…)","default":"Atelier Vogel Paysage|35|1;Vert Horizon Paysage|28|0;Les Jardins de l&#39;Ill|21|0;Kieffer Espaces Verts|13|0"}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="./gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #0b0c0e;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        color: #eceef2;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .glow {
+        position: absolute;
+        width: 900px;
+        height: 900px;
+        border-radius: 50%;
+        filter: blur(160px);
+        opacity: 0.22;
+      }
+      .glow.blue {
+        top: -380px;
+        right: -260px;
+        background: #3b82f6;
+      }
+      .glow.emerald {
+        bottom: -460px;
+        left: -300px;
+        background: #10b981;
+        opacity: 0.12;
+      }
+      .clip {
+        position: absolute;
+        inset: 0;
+        padding: 120px 160px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .eyebrow {
+        font-size: 30px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #3b82f6;
+      }
+      .muted {
+        color: #8b93a1;
+      }
+      .brand {
+        position: absolute;
+        left: 160px;
+        bottom: 72px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 0.32em;
+        color: #eceef2;
+      }
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #3b82f6, #10b981);
+      }
+
+      /* Scène 1 — intro */
+      #intro h1 {
+        margin-top: 28px;
+        font-size: 128px;
+        font-weight: 700;
+        letter-spacing: -0.035em;
+        line-height: 1.02;
+      }
+      #intro p {
+        margin-top: 36px;
+        font-size: 40px;
+      }
+
+      /* Scène 2 — Score de Dominance */
+      #score .value {
+        margin-top: 80px;
+        display: flex;
+        align-items: baseline;
+        gap: 36px;
+      }
+      #score-num {
+        font-size: 300px;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        line-height: 1;
+      }
+      .delta {
+        display: inline-flex;
+        align-items: center;
+        padding: 12px 26px;
+        border-radius: 999px;
+        font-size: 40px;
+        font-weight: 700;
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.12);
+        border: 2px solid rgba(16, 185, 129, 0.35);
+      }
+      .delta.down {
+        color: #f43f5e;
+        background: rgba(244, 63, 94, 0.12);
+        border-color: rgba(244, 63, 94, 0.35);
+      }
+      .track {
+        margin-top: 56px;
+        width: 100%;
+        height: 28px;
+        border-radius: 999px;
+        background: #22262f;
+        overflow: hidden;
+      }
+      .fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #3b82f6, #10b981);
+        transform-origin: left center;
+      }
+
+      /* Scène 3 — KPIs */
+      .cards {
+        margin-top: 56px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+      }
+      .card {
+        padding: 48px;
+        border-radius: 28px;
+        background: #14161a;
+        border: 2px solid #22262f;
+      }
+      .card .label {
+        font-size: 30px;
+      }
+      .card .big {
+        margin-top: 20px;
+        font-size: 112px;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+      .card .sub {
+        margin-top: 12px;
+        font-size: 30px;
+        font-weight: 600;
+      }
+      .ok {
+        color: #10b981;
+      }
+      .warn {
+        color: #f59e0b;
+      }
+
+      /* Scène 4 — Part de voix */
+      .bars {
+        margin-top: 56px;
+        display: flex;
+        flex-direction: column;
+        gap: 34px;
+      }
+      .bar-row {
+        display: grid;
+        grid-template-columns: 560px 1fr 120px;
+        align-items: center;
+        gap: 36px;
+        font-size: 34px;
+      }
+      .bar-row .name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bar-row .bar {
+        height: 44px;
+        border-radius: 12px;
+        background: #3a404c;
+        transform-origin: left center;
+      }
+      .bar-row.client .name {
+        font-weight: 700;
+      }
+      .bar-row.client .bar {
+        background: linear-gradient(90deg, #3b82f6, #10b981);
+      }
+      .bar-row .pct {
+        text-align: right;
+        font-weight: 700;
+      }
+
+      /* Scène 5 — outro */
+      #outro {
+        align-items: center;
+        text-align: center;
+      }
+      #outro h2 {
+        margin-top: 28px;
+        font-size: 96px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+      #outro p {
+        margin-top: 32px;
+        font-size: 38px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="bilan-mensuel"
+      data-start="0"
+      data-duration="17"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div class="glow blue" data-layout-allow-overflow></div>
+      <div class="glow emerald" data-layout-allow-overflow></div>
+
+      <section id="intro" class="clip" data-start="0" data-duration="3.4" data-track-index="0">
+        <div class="eyebrow">Bilan GEO · <span data-bind="month"></span></div>
+        <h1 data-bind="company"></h1>
+        <p class="muted">Votre visibilité dans les moteurs de réponse IA, ce mois-ci.</p>
+      </section>
+
+      <section id="score" class="clip" data-start="3.4" data-duration="4" data-track-index="0">
+        <div class="eyebrow">Score de Dominance GEO</div>
+        <div class="value">
+          <div id="score-num">0%</div>
+          <div id="score-delta" class="delta"></div>
+        </div>
+        <div class="track"><div id="score-fill" class="fill"></div></div>
+      </section>
+
+      <section id="kpis" class="clip" data-start="7.4" data-duration="3.8" data-track-index="0">
+        <div class="eyebrow">Les chiffres clés</div>
+        <div class="cards">
+          <div class="card">
+            <div class="label muted">Présence IA</div>
+            <div class="big" id="presence-num">0%</div>
+            <div class="sub" id="presence-delta"></div>
+          </div>
+          <div class="card">
+            <div class="label muted">Note Google</div>
+            <div class="big" id="rating-num">0,0 ★</div>
+            <div class="sub ok" id="reviews-new"></div>
+          </div>
+          <div class="card">
+            <div class="label muted">Erreurs NAP</div>
+            <div class="big" id="nap-num">0</div>
+            <div class="sub" id="nap-sub"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="sov" class="clip" data-start="11.2" data-duration="3.4" data-track-index="0">
+        <div class="eyebrow">Part de voix IA face à vos concurrents</div>
+        <div class="bars" id="sov-bars"></div>
+      </section>
+
+      <section id="outro" class="clip" data-start="14.6" data-duration="2.4" data-track-index="0">
+        <div class="eyebrow">On continue le mois prochain</div>
+        <h2>Merci pour votre confiance.</h2>
+        <p class="muted">Rapport complet disponible dans votre espace client.</p>
+      </section>
+
+      <div class="brand"><div class="brand-mark"></div>HAVNN</div>
+    </div>
+
+    <script>
+      // Variables : valeurs déclarées sur <html>, surchargées par `hyperframes render --variables`
+      // et, pour le lecteur embarqué dans le dashboard, par les paramètres d'URL (?score=72&…).
+      // Hors CLI (lecteur embarqué servi en statique), getVariables() peut être absent :
+      // on relit alors les valeurs par défaut directement depuis data-composition-variables.
+      const defaults = Object.fromEntries(
+        JSON.parse(document.documentElement.dataset.compositionVariables || "[]").map((d) => [d.id, d.default]),
+      );
+      const runtimeVars = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {};
+      const v = { ...defaults, ...runtimeVars };
+      for (const [key, value] of new URLSearchParams(window.location.search)) {
+        if (!(key in defaults)) continue;
+        v[key] = typeof defaults[key] === "number" ? Number(value) || 0 : value;
+      }
+
+      const fr1 = new Intl.NumberFormat("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      const signed = (n) => (n > 0 ? "+" : n < 0 ? "−" : "±") + Math.abs(n);
+      const clamp = (n) => Math.max(0, Math.min(100, n));
+
+      document.querySelectorAll("[data-bind]").forEach((el) => {
+        el.textContent = v[el.dataset.bind];
+      });
+
+      const scoreDelta = document.getElementById("score-delta");
+      scoreDelta.textContent = `${signed(v.scoreDelta)} pts`;
+      if (v.scoreDelta < 0) scoreDelta.classList.add("down");
+
+      const presenceDelta = document.getElementById("presence-delta");
+      presenceDelta.textContent = `${signed(v.presenceDelta)} pts vs mois précédent`;
+      presenceDelta.className = `sub ${v.presenceDelta < 0 ? "warn" : "ok"}`;
+
+      document.getElementById("reviews-new").textContent = `+${v.reviewsNew} avis ce mois`;
+      const napSub = document.getElementById("nap-sub");
+      napSub.textContent = v.napErrors === 0 ? "Citations alignées" : "À corriger en priorité";
+      napSub.className = `sub ${v.napErrors === 0 ? "ok" : "warn"}`;
+
+      // Part de voix : "nom|mentions|client;…" → pourcentage du total des mentions.
+      const brands = String(v.sov)
+        .split(";")
+        .map((row) => row.split("|"))
+        .filter((cols) => cols[0])
+        .map(([name, mentions, client]) => ({ name, mentions: Number(mentions) || 0, client: client === "1" }))
+        .slice(0, 5);
+      const totalMentions = brands.reduce((sum, b) => sum + b.mentions, 0) || 1;
+      const maxShare = Math.max(...brands.map((b) => b.mentions / totalMentions), 0.01);
+      const bars = document.getElementById("sov-bars");
+      brands.forEach((b) => {
+        const share = Math.round((b.mentions / totalMentions) * 100);
+        const row = document.createElement("div");
+        row.className = `bar-row${b.client ? " client" : ""}`;
+        row.innerHTML = `<div class="name"></div><div><div class="bar" style="width:${
+          ((b.mentions / totalMentions) / maxShare) * 100
+        }%"></div></div><div class="pct">${share}%</div>`;
+        row.querySelector(".name").textContent = b.name;
+        bars.appendChild(row);
+      });
+
+      // ------------------------------------------------------------------ Timeline
+      const tl = gsap.timeline({ paused: true });
+      const counter = (el, to, start, duration, format) => {
+        const state = { n: 0 };
+        tl.fromTo(
+          state,
+          { n: 0 },
+          {
+            n: to,
+            duration,
+            ease: "power2.out",
+            immediateRender: false,
+            onUpdate: () => (el.textContent = format(state.n)),
+          },
+          start,
+        );
+      };
+
+      // États de repos avant le premier tween (seek-safe)
+      tl.set("#score-fill, #sov .bar", { scaleX: 0 }, 0);
+
+      // Intro
+      tl.from("#intro .eyebrow", { opacity: 0, y: 24, duration: 0.6, ease: "power3.out" }, 0.2);
+      tl.from("#intro h1", { opacity: 0, y: 48, duration: 0.8, ease: "power3.out" }, 0.4);
+      tl.from("#intro p", { opacity: 0, y: 24, duration: 0.6, ease: "power3.out" }, 0.8);
+      tl.to("#intro", { opacity: 0, duration: 0.4 }, 3.0);
+
+      // Score
+      tl.from("#score .eyebrow", { opacity: 0, y: 24, duration: 0.5 }, 3.5);
+      counter(document.getElementById("score-num"), v.score, 3.6, 1.8, (n) => `${Math.round(n)}%`);
+      tl.fromTo("#score-fill", { scaleX: 0 }, { scaleX: clamp(v.score) / 100, duration: 1.8, ease: "power2.out", immediateRender: false }, 3.6);
+      tl.from("#score-delta", { opacity: 0, scale: 0.8, duration: 0.5, ease: "back.out(2)" }, 5.4);
+      tl.to("#score", { opacity: 0, duration: 0.4 }, 7.0);
+
+      // KPIs
+      tl.from("#kpis .eyebrow", { opacity: 0, y: 24, duration: 0.5 }, 7.5);
+      tl.from("#kpis .card", { opacity: 0, y: 60, duration: 0.6, stagger: 0.15, ease: "power3.out" }, 7.6);
+      counter(document.getElementById("presence-num"), v.presence, 7.8, 1.4, (n) => `${Math.round(n)}%`);
+      counter(document.getElementById("rating-num"), v.rating, 7.95, 1.4, (n) => `${fr1.format(n)} ★`);
+      counter(document.getElementById("nap-num"), v.napErrors, 8.1, 1.0, (n) => `${Math.round(n)}`);
+      tl.from("#kpis .sub", { opacity: 0, duration: 0.4, stagger: 0.15 }, 9.2);
+      tl.to("#kpis", { opacity: 0, duration: 0.4 }, 10.8);
+
+      // Part de voix
+      tl.from("#sov .eyebrow", { opacity: 0, y: 24, duration: 0.5 }, 11.3);
+      tl.from("#sov .bar-row", { opacity: 0, x: -40, duration: 0.5, stagger: 0.12 }, 11.4);
+      tl.fromTo("#sov .bar", { scaleX: 0 }, { scaleX: 1, duration: 1.1, stagger: 0.12, ease: "power2.out", immediateRender: false }, 11.6);
+      tl.to("#sov", { opacity: 0, duration: 0.4 }, 14.2);
+
+      // Outro
+      tl.from("#outro > *", { opacity: 0, y: 32, duration: 0.6, stagger: 0.15, ease: "power3.out" }, 14.7);
+
+      // Laisse l'outro à l'écran jusqu'à la fin de la composition (17 s).
+      tl.set({}, {}, 17);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["bilan-mensuel"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
