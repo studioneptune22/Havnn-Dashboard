@@ -2,12 +2,10 @@
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import type { AiEngine, ShareOfVoice } from "@/types/database";
+import type { ShareOfVoice } from "@/types/database";
 
 import { ChartLegend, ChartTooltip } from "./chart-tooltip";
-import { CHART, ENGINE_COLORS, ENGINE_LABELS } from "./chart-theme";
-
-const ENGINES: AiEngine[] = ["chatgpt", "perplexity", "gemini"];
+import { ACTIVE_ENGINES as ENGINES, CHART, ENGINE_COLORS, ENGINE_LABELS } from "./chart-theme";
 
 export function ShareOfVoiceChart({ data }: { data: ShareOfVoice[] }) {
   const promptsTotal = data[0]?.prompts_total ?? 20;

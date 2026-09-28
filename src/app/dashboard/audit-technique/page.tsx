@@ -13,9 +13,9 @@ import type { TechnicalCheck } from "@/types/database";
 
 export const metadata: Metadata = { title: "Structure & Factualité" };
 
-/** % de conformité : ok = 1, warning = 0,5, error/pending = 0. */
+/** % de conformité : ok = 1, warning = 0,5, error/pending = 0 · null = pas encore audité. */
 function checksScore(checks: TechnicalCheck[]) {
-  if (checks.length === 0) return 0;
+  if (checks.length === 0) return null;
   const points = checks.reduce((sum, c) => sum + (c.status === "ok" ? 1 : c.status === "warning" ? 0.5 : 0), 0);
   return Math.round((points / checks.length) * 100);
 }
@@ -28,12 +28,12 @@ export default async function AuditTechniquePage() {
   const llmsChecks = checks.filter((c) => c.pillar === "llms_txt");
 
   const napFields = nap.flatMap((c) => [c.name_ok, c.address_ok, c.phone_ok]);
-  const napScore = napFields.length ? Math.round((napFields.filter(Boolean).length / napFields.length) * 100) : 0;
+  const napScore = napFields.length ? Math.round((napFields.filter(Boolean).length / napFields.length) * 100) : null;
   const napMisaligned = nap.filter((c) => !(c.name_ok && c.address_ok && c.phone_ok)).length;
 
   const sentimentScore = sentiment.length
     ? Math.round(sentiment.reduce((sum, s) => sum + Number(s.positive_pct), 0) / sentiment.length)
-    : 0;
+    : null;
 
   const lastCheck = [...checks].sort((a, b) => b.checked_at.localeCompare(a.checked_at))[0]?.checked_at;
 
@@ -84,7 +84,9 @@ export default async function AuditTechniquePage() {
           index={3}
           title="Alignement du signal NAP"
           description={
-            napMisaligned === 0
+            nap.length === 0
+              ? "Cohérence du Nom, de l'Adresse et du Téléphone sur les annuaires et plateformes clés."
+              : napMisaligned === 0
               ? "Nom, Adresse et Téléphone identiques sur toutes les plateformes suivies."
               : `${napMisaligned} plateforme${napMisaligned > 1 ? "s" : ""} à corriger pour un signal NAP parfaitement cohérent.`
           }

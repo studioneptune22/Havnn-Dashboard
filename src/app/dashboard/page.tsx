@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Bot, Gauge, MapPinOff, Star } from "lucide-react";
 
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
-import { ENGINE_COLORS, ENGINE_LABELS } from "@/components/dashboard/chart-theme";
+import { ACTIVE_ENGINES, ENGINE_COLORS, ENGINE_LABELS } from "@/components/dashboard/chart-theme";
 import { DeltaBadge } from "@/components/dashboard/delta-badge";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PeriodSelect } from "@/components/dashboard/period-select";
@@ -15,9 +15,11 @@ import { Progress } from "@/components/ui/progress";
 import { parsePeriod } from "@/lib/data/period";
 import { getCockpitData, getSession } from "@/lib/data/queries";
 import { delta, formatDateLong } from "@/lib/utils";
-import type { AiEngine } from "@/types/database";
+import type { ShareOfVoice } from "@/types/database";
 
 export const metadata: Metadata = { title: "Cockpit" };
+
+const mentions = (b: ShareOfVoice) => ACTIVE_ENGINES.reduce((sum, e) => sum + b[`${e}_mentions`], 0);
 
 export default async function CockpitPage({ searchParams }: { searchParams: { period?: string } }) {
   const period = parsePeriod(searchParams.period);
@@ -25,11 +27,8 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
   const { scores, latest, previous, shareOfVoice, activity } = await getCockpitData(company.id, period);
 
   const client = shareOfVoice.find((b) => b.is_client);
-  const totalMentions = shareOfVoice.reduce(
-    (sum, b) => sum + b.chatgpt_mentions + b.perplexity_mentions + b.gemini_mentions,
-    0,
-  );
-  const clientMentions = client ? client.chatgpt_mentions + client.perplexity_mentions + client.gemini_mentions : 0;
+  const totalMentions = shareOfVoice.reduce((sum, b) => sum + mentions(b), 0);
+  const clientMentions = client ? mentions(client) : 0;
   const clientShare = totalMentions ? Math.round((clientMentions / totalMentions) * 100) : 0;
   const initialNapErrors = scores[0]?.nap_errors_count ?? latest?.nap_errors_count ?? 0;
 
@@ -78,7 +77,7 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
               </div>
               <p className="mt-1 text-xs text-muted-foreground">des requêtes avec la marque dans le Top 3</p>
               <div className="mt-4 space-y-2">
-                {(["chatgpt", "perplexity", "gemini"] as AiEngine[]).map((engine) => {
+                {ACTIVE_ENGINES.map((engine) => {
                   const rate = latest[`${engine}_presence_rate`];
                   if (rate === null) return null;
                   return (

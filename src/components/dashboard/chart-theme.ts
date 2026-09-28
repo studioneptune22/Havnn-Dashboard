@@ -15,6 +15,17 @@ export const ENGINE_LABELS = {
   gemini: "Gemini",
 } as const;
 
+/**
+ * Moteurs IA suivis et affichés dans le portail. Perplexity reste dans le
+ * schéma de données : il suffit de le rajouter ici pour le réafficher.
+ */
+export const ACTIVE_ENGINES = ["chatgpt", "gemini"] as const satisfies readonly (keyof typeof ENGINE_LABELS)[];
+
+/** "ChatGPT et Gemini", "ChatGPT, Perplexity et Gemini"… */
+export const ACTIVE_ENGINES_LABEL = new Intl.ListFormat("fr", { type: "conjunction" }).format(
+  ACTIVE_ENGINES.map((e) => ENGINE_LABELS[e]),
+);
+
 export const CHART = {
   grid: "#22262F",
   axis: "#8b919e",
