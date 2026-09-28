@@ -1,6 +1,7 @@
+import { ACTIVE_ENGINES } from "@/components/dashboard/chart-theme";
 import type { AiEngine, PromptMonitoring } from "@/types/database";
 
-export const ENGINES: AiEngine[] = ["chatgpt", "perplexity", "gemini"];
+export const ENGINES: readonly AiEngine[] = ACTIVE_ENGINES;
 
 export type PromptOutcome = "success" | "partial" | "missed" | "pending";
 
