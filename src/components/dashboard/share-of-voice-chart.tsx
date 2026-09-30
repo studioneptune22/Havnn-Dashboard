@@ -21,7 +21,7 @@ export function ShareOfVoiceChart({ data }: { data: ShareOfVoice[] }) {
     <div className="space-y-3">
       <ChartLegend items={ENGINES.map((e) => ({ label: ENGINE_LABELS[e], color: ENGINE_COLORS[e] }))} />
       <div className="-mx-1 overflow-x-auto scrollbar-thin">
-        <div className="h-[340px] min-w-[520px] px-1">
+        <div className="h-[340px] px-1" style={{ minWidth: Math.max(520, rows.length * 80) }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={rows} margin={{ top: 8, right: 4, bottom: 0, left: -24 }} barGap={2} barCategoryGap="22%">
             <CartesianGrid vertical={false} stroke={CHART.grid} />
