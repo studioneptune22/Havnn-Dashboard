@@ -84,7 +84,7 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
               footer={<DeltaBadge value={delta(latest.ai_presence_rate, previous?.ai_presence_rate)} />}
             >
               <div className="text-4xl font-semibold tracking-tight tabular">
-                {Number(latest.ai_presence_rate).toLocaleString("fr-FR")}
+                {Math.round(Number(latest.ai_presence_rate))}
                 <span className="text-xl text-muted-foreground">%</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">des requêtes avec la marque dans le Top 3</p>
@@ -96,7 +96,7 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
                     <div key={engine} className="grid grid-cols-[72px_1fr_36px] items-center gap-2 text-xs">
                       <span className="text-muted-foreground">{ENGINE_LABELS[engine]}</span>
                       <Progress value={Number(rate)} className="h-1.5" indicatorClassName="bg-[var(--c)]" style={{ ["--c" as string]: ENGINE_COLORS[engine] }} />
-                      <span className="text-right tabular">{Number(rate)}%</span>
+                      <span className="text-right tabular">{Math.round(Number(rate))}%</span>
                     </div>
                   );
                 })}
