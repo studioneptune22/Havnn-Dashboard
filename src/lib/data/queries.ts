@@ -187,6 +187,21 @@ export async function getCockpitData(companyId: string, period: Period): Promise
   };
 }
 
+/** Journal d'activité, du plus récent au plus ancien. */
+export async function getActivity(companyId: string, limit: number): Promise<ActivityLog[]> {
+  if (!isSupabaseConfigured) return mock.mockActivity.slice(0, limit);
+
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("activity_logs")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false })
+    .limit(limit)
+    .returns<ActivityLog[]>();
+  return data ?? [];
+}
+
 // -----------------------------------------------------------------------------
 // Benchmark IA & Prompts
 // -----------------------------------------------------------------------------

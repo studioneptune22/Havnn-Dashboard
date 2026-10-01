@@ -9,18 +9,11 @@ import { LocationSelect } from "@/components/dashboard/location-select";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
 import { getAuditData, getLocations, getSession } from "@/lib/data/queries";
-import { isNapAligned, parseLocation } from "@/lib/locations";
+import { parseLocation } from "@/lib/locations";
+import { checksScore, napConformity, sentimentScore as getSentimentScore } from "@/lib/scores";
 import { formatDateLong } from "@/lib/utils";
-import type { TechnicalCheck } from "@/types/database";
 
 export const metadata: Metadata = { title: "Structure & Factualité" };
-
-/** % de conformité : ok = 1, warning = 0,5, error/pending = 0 · null = pas encore audité. */
-function checksScore(checks: TechnicalCheck[]) {
-  if (checks.length === 0) return null;
-  const points = checks.reduce((sum, c) => sum + (c.status === "ok" ? 1 : c.status === "warning" ? 0.5 : 0), 0);
-  return Math.round((points / checks.length) * 100);
-}
 
 export default async function AuditTechniquePage({ searchParams }: { searchParams: { centre?: string } }) {
   const { company } = await getSession();
@@ -37,14 +30,9 @@ export default async function AuditTechniquePage({ searchParams }: { searchParam
   const schemaChecks = checks.filter((c) => c.pillar === "schema");
   const llmsChecks = checks.filter((c) => c.pillar === "llms_txt");
 
-  // Conformité par fiche : une fiche ne compte que si Nom, Adresse et Téléphone sont tous justes
-  // (une fiche « presque juste » contredit quand même les autres aux yeux des moteurs).
-  const napMisaligned = nap.filter((c) => !isNapAligned(c)).length;
-  const napScore = nap.length ? Math.round(((nap.length - napMisaligned) / nap.length) * 100) : null;
+  const { score: napScore, misaligned: napMisaligned } = napConformity(nap);
 
-  const sentimentScore = sentiment.length
-    ? Math.round(sentiment.reduce((sum, s) => sum + Number(s.positive_pct), 0) / sentiment.length)
-    : null;
+  const sentimentScore = getSentimentScore(sentiment);
 
   const lastCheck = [...checks].sort((a, b) => b.checked_at.localeCompare(a.checked_at))[0]?.checked_at;
 

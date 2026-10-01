@@ -25,7 +25,8 @@ réalistes (Atelier Vogel Paysage, paysagiste à Strasbourg, face à 3 concurren
 | `/dashboard` | Cockpit : header entreprise + sélecteur de période + statut, 4 KPIs héros, part de voix IA, journal d'activité, évolution du score |
 | `/dashboard/geo-prompts` | Suivi des 20 prompts métiers (ChatGPT / Perplexity / Gemini), filtres Réussis / Partiels / Manqués, drawer avec l'extrait de réponse IA |
 | `/dashboard/audit-technique` | Les 4 piliers GEO : Schema.org, llms.txt, alignement NAP, sentiment de marque |
-| `/dashboard/rapports` | Rapports mensuels PDF + coffre-fort documentaire (URLs signées Storage) |
+| `/dashboard/rapports` | Rapports mensuels PDF + coffre-fort documentaire (URLs signées Storage) + bouton « Générer un rapport » |
+| `/dashboard/rapports/generer` | Rapport PDF généré à la volée (Cockpit, Benchmark, Structure & Factualité), via `@react-pdf/renderer` |
 
 ## Brancher Supabase
 

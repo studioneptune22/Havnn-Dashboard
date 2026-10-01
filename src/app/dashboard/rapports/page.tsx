@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { FileBarChart, FileSignature, FileSpreadsheet, FileText, Lock, Map, type LucideIcon } from "lucide-react";
 
 import { DownloadButton } from "@/components/dashboard/download-button";
+import { GenerateReportButton } from "@/components/dashboard/generate-report-button";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +37,7 @@ export default async function RapportsPage() {
         eyebrow="Espace documentaire"
         title="Documents & Rapports"
         description="Retrouvez vos rapports mensuels de performance GEO et l'ensemble des documents de votre accompagnement."
+        actions={<GenerateReportButton />}
       />
 
       {/* ------------------------------------------------------ Rapports mensuels */}
