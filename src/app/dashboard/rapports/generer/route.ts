@@ -63,8 +63,14 @@ export async function GET() {
     ],
   };
 
-  // ReportDocument rend un <Document> : le cast reflète ce que renderToBuffer attend.
-  const pdf = await renderToBuffer(createElement(ReportDocument, { data }) as ReactElement<DocumentProps>);
+  let pdf: Buffer;
+  try {
+    // ReportDocument rend un <Document> : le cast reflète ce que renderToBuffer attend.
+    pdf = await renderToBuffer(createElement(ReportDocument, { data }) as ReactElement<DocumentProps>);
+  } catch (err) {
+    console.error("[rapport PDF] échec du rendu", { company: company.id, err });
+    return new Response("La génération du rapport a échoué.", { status: 500 });
+  }
 
   const stamp = new Intl.DateTimeFormat("sv-SE", {
     timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
