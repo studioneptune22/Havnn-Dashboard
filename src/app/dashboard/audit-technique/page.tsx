@@ -37,9 +37,10 @@ export default async function AuditTechniquePage({ searchParams }: { searchParam
   const schemaChecks = checks.filter((c) => c.pillar === "schema");
   const llmsChecks = checks.filter((c) => c.pillar === "llms_txt");
 
-  const napFields = nap.flatMap((c) => [c.name_ok, c.address_ok, c.phone_ok]);
-  const napScore = napFields.length ? Math.round((napFields.filter(Boolean).length / napFields.length) * 100) : null;
+  // Conformité par fiche : une fiche ne compte que si Nom, Adresse et Téléphone sont tous justes
+  // (une fiche « presque juste » contredit quand même les autres aux yeux des moteurs).
   const napMisaligned = nap.filter((c) => !isNapAligned(c)).length;
+  const napScore = nap.length ? Math.round(((nap.length - napMisaligned) / nap.length) * 100) : null;
 
   const sentimentScore = sentiment.length
     ? Math.round(sentiment.reduce((sum, s) => sum + Number(s.positive_pct), 0) / sentiment.length)
