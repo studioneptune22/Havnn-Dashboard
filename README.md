@@ -32,6 +32,7 @@ réalistes (Atelier Vogel Paysage, paysagiste à Strasbourg, face à 3 concurren
 1. Créez un projet Supabase, puis exécutez dans le SQL Editor :
    - `supabase/schema.sql` (tables, enums, vue `prompts_latest`, RLS, bucket Storage `documents`)
    - `supabase/seed.sql` (optionnel, données de démo)
+   - `supabase/migrations/*.sql`, dans l'ordre (idempotentes, relançables sans risque)
 2. Copiez `.env.example` en `.env.local` et renseignez les clés.
 3. Créez l'utilisateur client dans **Authentication > Users**, puis rattachez-le à son entreprise
    (requête en bas de `seed.sql`).
@@ -50,6 +51,18 @@ Tables complémentaires nécessaires aux vues : `share_of_voice` (graphique part
 `nap_citations`, `sentiment_snapshots` (audit technique). `geo_scores` est enrichie des champs Google (note, avis)
 et du taux de présence par moteur ; `prompts_monitoring` stocke la position par moteur (`position` = meilleure
 position, colonne générée).
+
+### Clients multi-sites (`locations`)
+
+Un client peut déclarer plusieurs établissements (centres, agences…) dans la table `locations`, chacun avec
+sa note Google. Sans établissement, le portail reste mono-site. Avec des établissements :
+
+- **Cockpit** : note Google du groupe (moyenne pondérée par les avis) et tableau « Vos centres ».
+- **Structure & Factualité** : sélecteur de centre (`?centre=<id>`) pour le pilier NAP ; une fiche NAP par
+  (établissement, plateforme).
+- **Benchmark IA & Prompts** : une question peut être rattachée à un centre (`location_id`), avec un filtre ;
+  les questions sans centre sont « transverses ».
+- Score, part de voix et taux de présence restent au niveau du groupe.
 
 ## Alimentation hebdomadaire (Make.com / N8N)
 
@@ -74,7 +87,9 @@ position, colonne générée).
 ```
 
 `type` ∈ `geo_scores`, `prompts_monitoring`, `activity_logs`, `documents`, `share_of_voice`,
-`technical_checks` (upsert sur `item_key`), `nap_citations` (upsert sur `platform`), `sentiment_snapshots`.
+`technical_checks` (upsert sur `item_key`), `nap_citations` (upsert sur établissement + `platform`),
+`sentiment_snapshots`, `locations` (upsert sur `name`). Pour un client multi-sites, un record `prompts_monitoring`
+ou `nap_citations` cible un établissement par `location_id` ou par son nom (`"location": "Autovision Illkirch"`).
 Seules les colonnes connues sont conservées et `company_id` est toujours injecté par le serveur.
 Dans les extraits IA (`ai_snippet`), entourez les mentions de la marque de `**…**` pour les surligner.
 
@@ -97,7 +112,7 @@ src/
 │  ├─ supabase/              # clients serveur / admin / middleware
 │  └─ data/                  # queries.ts (Supabase ou mock), mock.ts, period.ts
 └─ types/database.ts
-supabase/schema.sql · supabase/seed.sql
+supabase/schema.sql · supabase/seed.sql · supabase/migrations/
 ```
 
 ## Scripts

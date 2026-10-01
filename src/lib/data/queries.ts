@@ -10,6 +10,7 @@ import type {
   Company,
   DocumentItem,
   GeoScore,
+  Location,
   NapCitation,
   PromptMonitoring,
   SentimentSnapshot,
@@ -71,6 +72,38 @@ export const getSession = cache(async (): Promise<Session> => {
 
   return { user: profile, company, demo: false };
 });
+
+// -----------------------------------------------------------------------------
+// Établissements (clients multi-sites)
+// -----------------------------------------------------------------------------
+/** Établissements du client, dans l'ordre d'affichage. Vide pour un client mono-site. */
+export const getLocations = cache(async (companyId: string): Promise<Location[]> => {
+  if (!isSupabaseConfigured) return [];
+
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("locations")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("sort_order")
+    .order("name")
+    .returns<Location[]>();
+  return data ?? [];
+});
+
+/** Fiches NAP (toutes plateformes, tous établissements). */
+export async function getNapCitations(companyId: string): Promise<NapCitation[]> {
+  if (!isSupabaseConfigured) return mock.mockNapCitations;
+
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("nap_citations")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("platform")
+    .returns<NapCitation[]>();
+  return data ?? [];
+}
 
 // -----------------------------------------------------------------------------
 // Cockpit
@@ -187,7 +220,7 @@ export async function getAuditData(companyId: string): Promise<AuditData> {
   const supabase = createClient();
   const [checks, nap, sentiment] = await Promise.all([
     supabase.from("technical_checks").select("*").eq("company_id", companyId).order("item_key").returns<TechnicalCheck[]>(),
-    supabase.from("nap_citations").select("*").eq("company_id", companyId).order("platform").returns<NapCitation[]>(),
+    getNapCitations(companyId),
     supabase
       .from("sentiment_snapshots")
       .select("*")
@@ -203,7 +236,7 @@ export async function getAuditData(companyId: string): Promise<AuditData> {
 
   return {
     checks: checks.data ?? [],
-    nap: nap.data ?? [],
+    nap,
     sentiment: Array.from(latestBySource.values()),
   };
 }

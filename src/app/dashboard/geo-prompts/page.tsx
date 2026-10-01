@@ -6,13 +6,13 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { ENGINES, promptOutcome } from "@/components/prompts/prompt-utils";
 import { PromptsTable } from "@/components/prompts/prompts-table";
 import { Card } from "@/components/ui/card";
-import { getPrompts, getSession } from "@/lib/data/queries";
+import { getLocations, getPrompts, getSession } from "@/lib/data/queries";
 
 export const metadata: Metadata = { title: "Benchmark IA & Prompts" };
 
 export default async function GeoPromptsPage() {
   const { company } = await getSession();
-  const prompts = await getPrompts(company.id);
+  const [prompts, locations] = await Promise.all([getPrompts(company.id), getLocations(company.id)]);
 
   const scanned = prompts.filter((p) => promptOutcome(p) !== "pending");
   const citedSomewhere = scanned.filter((p) => promptOutcome(p) !== "missed").length;
@@ -51,7 +51,7 @@ export default async function GeoPromptsPage() {
         ))}
       </div>
 
-      <PromptsTable prompts={prompts} />
+      <PromptsTable prompts={prompts} locations={locations} />
     </>
   );
 }
