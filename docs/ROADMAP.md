@@ -26,7 +26,13 @@ Page d'atterrissage publique pour les prospects (inspiration : https://www.geobu
 - leads enregistrés dans Supabase + notification à jerome@havnn.fr ;
 - anti-abus et maîtrise des coûts : captcha, limite par IP et par email, plafond quotidien.
 
-À faire **après** l'automatisation (même moteur de scan). Estimation : 2,5 à 3 séances.
+Structure one-page retenue (d'après geobuster.ai, outil d'API Studio, agence alsacienne) :
+hero + formulaire, exemple de résultat (marques citées et nombre de citations), 3 offres
+(Test gratuit · Audit flash 15 min via Cal.com · Suivi GEO avec le dashboard HAVNN), présentation de Jérôme / Havnn,
+FAQ (GEO, différence avec le SEO, IA testées, petite entreprise locale, cité / mentionné / absent, variabilité des réponses…).
+Test gratuit sur 1 question (option : 3), pour la rapidité et le coût.
+
+À faire **après** l'automatisation (même moteur de scan). Estimation : 2 séances (test sur 1 question) à 3 (plusieurs questions).
 
 ## 📋 Clients
 
