@@ -18,7 +18,7 @@ _Dernière mise à jour : 1er octobre 2026_
 
 ## 🚀 Mi-octobre 2026 — Page « Testez votre visibilité IA »
 
-Page d'atterrissage publique pour les prospects :
+Page d'atterrissage publique pour les prospects (inspiration : https://www.geobuster.ai/) :
 - formulaire (entreprise, ville, activité, site, email) ;
 - mini-scan en direct : quelques questions générées pour l'activité et la ville, posées à ChatGPT et Gemini ;
 - résultat partiel affiché, résultat complet contre l'email (captation du lead, consentement RGPD) ;
