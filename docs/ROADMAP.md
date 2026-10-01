@@ -32,7 +32,19 @@ hero + formulaire, exemple de résultat (marques citées et nombre de citations)
 FAQ (GEO, différence avec le SEO, IA testées, petite entreprise locale, cité / mentionné / absent, variabilité des réponses…).
 Test gratuit sur 1 question (option : 3), pour la rapidité et le coût.
 
-À faire **après** l'automatisation (même moteur de scan). Estimation : 2 séances (test sur 1 question) à 3 (plusieurs questions).
+Formulaire du test (comme geobuster) : site web, marque + variantes de nom, question en langage naturel (avec exemples).
+Résultat en 4 indicateurs : score, position, contexte (ton employé par les IA), concurrents cités.
+Autres sections : « Pourquoi le GEO » (chiffres sourcés et vérifiés), moteurs testés, maquette de conversation
+« X n'apparaît nulle part », offres, présentation, FAQ.
+
+Estimation :
+- socle (1 question, ChatGPT + Gemini, 4 indicateurs, lead, Cal.com, anti-abus, page complète, FAQ) : 2 séances ;
+- par moteur supplémentaire (Perplexity, Mistral, Claude, Grok) : environ 1/4 de séance + un compte API ;
+- onglet « Analyse de contenu » (audit d'une page : Schema.org, llms.txt, structure, FAQ) : 1 séance,
+  réutilisable pour automatiser le pilier Structure & Factualité des clients ;
+- version anglaise : 1/2 séance (non prioritaire pour des TPE/PME alsaciennes).
+
+À faire **après** l'automatisation (même moteur de scan).
 
 ## 📋 Clients
 
