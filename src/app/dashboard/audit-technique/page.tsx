@@ -5,9 +5,11 @@ import { CheckList } from "@/components/audit/check-list";
 import { NapTable } from "@/components/audit/nap-table";
 import { PillarCard } from "@/components/audit/pillar-card";
 import { SentimentBars } from "@/components/audit/sentiment-bars";
+import { LocationSelect } from "@/components/dashboard/location-select";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
-import { getAuditData, getSession } from "@/lib/data/queries";
+import { getAuditData, getLocations, getSession } from "@/lib/data/queries";
+import { isNapAligned, parseLocation } from "@/lib/locations";
 import { formatDateLong } from "@/lib/utils";
 import type { TechnicalCheck } from "@/types/database";
 
@@ -20,16 +22,24 @@ function checksScore(checks: TechnicalCheck[]) {
   return Math.round((points / checks.length) * 100);
 }
 
-export default async function AuditTechniquePage() {
+export default async function AuditTechniquePage({ searchParams }: { searchParams: { centre?: string } }) {
   const { company } = await getSession();
-  const { checks, nap, sentiment } = await getAuditData(company.id);
+  const [{ checks, nap: allNap, sentiment }, locations] = await Promise.all([
+    getAuditData(company.id),
+    getLocations(company.id),
+  ]);
+
+  // Multi-sites : le pilier NAP se lit par centre (ou tous centres confondus).
+  const location = parseLocation(searchParams.centre, locations);
+  const nap = location ? allNap.filter((c) => c.location_id === location.id) : allNap;
+  const locationNames = new Map(locations.map((l) => [l.id, l.name]));
 
   const schemaChecks = checks.filter((c) => c.pillar === "schema");
   const llmsChecks = checks.filter((c) => c.pillar === "llms_txt");
 
   const napFields = nap.flatMap((c) => [c.name_ok, c.address_ok, c.phone_ok]);
   const napScore = napFields.length ? Math.round((napFields.filter(Boolean).length / napFields.length) * 100) : null;
-  const napMisaligned = nap.filter((c) => !(c.name_ok && c.address_ok && c.phone_ok)).length;
+  const napMisaligned = nap.filter((c) => !isNapAligned(c)).length;
 
   const sentimentScore = sentiment.length
     ? Math.round(sentiment.reduce((sum, s) => sum + Number(s.positive_pct), 0) / sentiment.length)
@@ -43,7 +53,12 @@ export default async function AuditTechniquePage() {
         eyebrow="Audit technique"
         title="Structure & Factualité"
         description="Les 4 piliers qui permettent aux IA de comprendre, vérifier et recommander votre entreprise."
-        actions={lastCheck && <Badge variant="outline">Dernier contrôle : {formatDateLong(lastCheck)}</Badge>}
+        actions={
+          <>
+            {lastCheck && <Badge variant="outline">Dernier contrôle : {formatDateLong(lastCheck)}</Badge>}
+            {locations.length > 0 && <LocationSelect locations={locations} value={location?.id ?? null} />}
+          </>
+        }
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -82,7 +97,7 @@ export default async function AuditTechniquePage() {
 
         <PillarCard
           index={3}
-          title="Alignement du signal NAP"
+          title={location ? `Alignement du signal NAP · ${location.name}` : "Alignement du signal NAP"}
           description={
             nap.length === 0
               ? "Cohérence du Nom, de l'Adresse et du Téléphone sur les annuaires et plateformes clés."
@@ -93,7 +108,7 @@ export default async function AuditTechniquePage() {
           icon={MapPin}
           score={napScore}
         >
-          <NapTable citations={nap} />
+          <NapTable citations={nap} locationNames={location ? undefined : locationNames} />
         </PillarCard>
 
         <PillarCard

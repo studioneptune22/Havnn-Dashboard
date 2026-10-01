@@ -15,9 +15,12 @@ import { Snippet } from "./snippet";
 
 export function PromptDetailSheet({
   prompt,
+  locationName,
   onOpenChange,
 }: {
   prompt: PromptMonitoring | null;
+  /** Centre auquel la question est rattachée (clients multi-sites). */
+  locationName?: string;
   onOpenChange: (open: boolean) => void;
 }) {
   return (
@@ -26,9 +29,16 @@ export function PromptDetailSheet({
         {prompt && (
           <>
             <SheetHeader className="pr-8">
-              <Badge variant="outline" className="w-fit">
-                Dernier scan · {formatDateTime(prompt.scanned_at)}
-              </Badge>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline" className="w-fit">
+                  Dernier scan · {formatDateTime(prompt.scanned_at)}
+                </Badge>
+                {locationName && (
+                  <Badge variant="outline" className="w-fit">
+                    {locationName}
+                  </Badge>
+                )}
+              </div>
               <SheetTitle className="text-xl leading-snug">« {prompt.prompt_text} »</SheetTitle>
               <SheetDescription>Résultat de la marque sur chaque moteur IA lors du dernier scan.</SheetDescription>
             </SheetHeader>

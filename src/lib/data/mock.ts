@@ -215,6 +215,7 @@ export const mockPrompts: PromptMonitoring[] = promptRows.map(([prompt, c, p, g,
   position: [c[1], p[1], g[1]].filter((x): x is number => x !== null).sort((a, b) => a - b)[0] ?? null,
   ai_snippet: snippet,
   ai_snippets: {},
+  location_id: null,
   scanned_at: scanDates[i % scanDates.length],
 }));
 
@@ -279,6 +280,7 @@ const nap: Array<[string, boolean, boolean, boolean]> = [
 export const mockNapCitations: NapCitation[] = nap.map(([platform, name_ok, address_ok, phone_ok], i) => ({
   id: `nap-${i}`,
   company_id: cid,
+  location_id: null,
   platform,
   listing_url: null,
   name_ok,

@@ -29,6 +29,22 @@ export interface Company {
   created_at: string;
 }
 
+/** Établissement d'un client multi-sites (centre, agence…). */
+export interface Location {
+  id: string;
+  company_id: string;
+  name: string;
+  brand: string | null;
+  address: string | null;
+  postal_code: string | null;
+  city: string | null;
+  phone: string | null;
+  google_rating: number | null;
+  google_reviews_total: number | null;
+  google_maps_url: string | null;
+  sort_order: number;
+}
+
 export interface AppUser {
   id: string;
   company_id: string | null;
@@ -65,6 +81,8 @@ export interface PromptMonitoring {
   position: number | null;
   ai_snippet: string | null;
   ai_snippets: Partial<Record<AiEngine, string>>;
+  /** Établissement concerné, ou null pour une question transverse. */
+  location_id: string | null;
   scanned_at: string;
 }
 
@@ -114,6 +132,8 @@ export interface TechnicalCheck {
 export interface NapCitation {
   id: string;
   company_id: string;
+  /** Établissement concerné, ou null pour une fiche unique (client mono-site). */
+  location_id: string | null;
   platform: string;
   listing_url: string | null;
   name_ok: boolean;

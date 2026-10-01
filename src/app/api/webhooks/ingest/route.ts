@@ -16,6 +16,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
  *
  * `company_id` est toujours injecté par le serveur : un record ne peut pas
  * écrire dans une autre entreprise que celle ciblée.
+ *
+ * Clients multi-sites : un record `prompts_monitoring` ou `nap_citations` peut
+ * cibler un établissement par `location_id` ou par son nom (`"location": "Autovision Illkirch"`).
  */
 
 export const runtime = "nodejs";
@@ -33,7 +36,7 @@ const TABLES = {
   prompts_monitoring: {
     columns: [
       "prompt_text", "chatgpt_status", "perplexity_status", "gemini_status", "chatgpt_position",
-      "perplexity_position", "gemini_position", "ai_snippet", "ai_snippets", "scanned_at",
+      "perplexity_position", "gemini_position", "ai_snippet", "ai_snippets", "location_id", "scanned_at",
     ],
   },
   activity_logs: { columns: ["title", "description", "category", "created_at"] },
@@ -49,8 +52,15 @@ const TABLES = {
     onConflict: "company_id,item_key",
   },
   nap_citations: {
-    columns: ["platform", "listing_url", "name_ok", "address_ok", "phone_ok", "checked_at"],
-    onConflict: "company_id,platform",
+    columns: ["location_id", "platform", "listing_url", "name_ok", "address_ok", "phone_ok", "checked_at"],
+    onConflict: "company_id,location_id,platform",
+  },
+  locations: {
+    columns: [
+      "name", "brand", "address", "postal_code", "city", "phone", "google_rating", "google_reviews_total",
+      "google_maps_url", "sort_order",
+    ],
+    onConflict: "company_id,name",
   },
   sentiment_snapshots: {
     columns: ["source", "positive_pct", "neutral_pct", "critical_pct", "summary", "recorded_at"],
@@ -112,15 +122,31 @@ export async function POST(request: NextRequest) {
   // Filtrage des colonnes autorisées + injection de company_id
   const table = type as TableName;
   const config: TableConfig = TABLES[table];
-  const rows = records.map((record) => {
+
+  // Établissement désigné par son nom → location_id (limité à l'entreprise ciblée)
+  let locationIds: Map<string, string> | null = null;
+  const byName = config.columns.includes("location_id") && records.some((r) => r && typeof r === "object" && "location" in r);
+  if (byName) {
+    const { data } = await supabase.from("locations").select("id, name").eq("company_id", companyId);
+    locationIds = new Map((data ?? []).map((l) => [l.name.trim().toLowerCase(), l.id]));
+  }
+
+  const rows: Record<string, unknown>[] = [];
+  for (const record of records) {
     const row: Record<string, unknown> = { company_id: companyId };
     if (record && typeof record === "object") {
+      const r = record as Record<string, unknown>;
       for (const col of config.columns) {
-        if (col in record) row[col] = (record as Record<string, unknown>)[col];
+        if (col in r) row[col] = r[col];
+      }
+      if (locationIds && typeof r.location === "string") {
+        const id = locationIds.get(r.location.trim().toLowerCase());
+        if (!id) return error(422, `Unknown location: ${r.location}`);
+        row.location_id = id;
       }
     }
-    return row;
-  });
+    rows.push(row);
+  }
 
   const query = config.onConflict
     ? supabase.from(table).upsert(rows, { onConflict: config.onConflict })

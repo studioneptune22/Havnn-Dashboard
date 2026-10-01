@@ -5,6 +5,7 @@ import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { ACTIVE_ENGINES, ENGINE_COLORS, ENGINE_LABELS } from "@/components/dashboard/chart-theme";
 import { DeltaBadge } from "@/components/dashboard/delta-badge";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { LocationsCard } from "@/components/dashboard/locations-card";
 import { PeriodSelect } from "@/components/dashboard/period-select";
 import { ScoreGauge } from "@/components/dashboard/score-gauge";
 import { ScoreTrendChart } from "@/components/dashboard/score-trend-chart";
@@ -13,7 +14,8 @@ import { AccountStatusBadge } from "@/components/dashboard/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { parsePeriod } from "@/lib/data/period";
-import { getCockpitData, getSession } from "@/lib/data/queries";
+import { getCockpitData, getLocations, getNapCitations, getSession } from "@/lib/data/queries";
+import { groupGoogleRating } from "@/lib/locations";
 import { delta, formatDateLong } from "@/lib/utils";
 import type { ShareOfVoice } from "@/types/database";
 
@@ -24,7 +26,17 @@ const mentions = (b: ShareOfVoice) => ACTIVE_ENGINES.reduce((sum, e) => sum + b[
 export default async function CockpitPage({ searchParams }: { searchParams: { period?: string } }) {
   const period = parsePeriod(searchParams.period);
   const { company } = await getSession();
-  const { scores, latest, previous, shareOfVoice, activity } = await getCockpitData(company.id, period);
+  const [{ scores, latest, previous, shareOfVoice, activity }, locations] = await Promise.all([
+    getCockpitData(company.id, period),
+    getLocations(company.id),
+  ]);
+  const multiSite = locations.length > 0;
+  const nap = multiSite ? await getNapCitations(company.id) : [];
+
+  // Multi-sites : la note Google affichée est celle du groupe (moyenne pondérée par les avis).
+  const group = groupGoogleRating(locations);
+  const googleRating = multiSite ? group.rating : latest?.google_rating ?? null;
+  const googleReviews = multiSite ? group.reviews : latest?.google_reviews_total ?? 0;
 
   const client = shareOfVoice.find((b) => b.is_client);
   const totalMentions = shareOfVoice.reduce((sum, b) => sum + mentions(b), 0);
@@ -40,7 +52,7 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-havnn-blue">Cockpit GEO</p>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{company.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {[company.sector, company.city].filter(Boolean).join(" · ")}
+            {[company.sector, multiSite ? `${locations.length} centres` : company.city].filter(Boolean).join(" · ")}
             {latest && <> · Dernière mise à jour le {formatDateLong(latest.recorded_at)}</>}
           </p>
         </div>
@@ -104,7 +116,7 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
             >
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-semibold tracking-tight tabular">
-                  {latest.google_rating?.toLocaleString("fr-FR", { minimumFractionDigits: 1 }) ?? "—"}
+                  {googleRating?.toLocaleString("fr-FR", { minimumFractionDigits: 1 }) ?? "—"}
                 </span>
                 <span className="text-xl text-muted-foreground">/ 5</span>
               </div>
@@ -113,7 +125,7 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
                   <Star
                     key={i}
                     className={
-                      i < Math.round(latest.google_rating ?? 0)
+                      i < Math.round(googleRating ?? 0)
                         ? "h-4 w-4 fill-amber-400 text-amber-400"
                         : "h-4 w-4 text-havnn-line"
                     }
@@ -121,8 +133,10 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
                 ))}
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground tabular">{latest.google_reviews_total ?? 0}</span> avis au
-                total sur votre fiche Google Business Profile
+                <span className="font-medium text-foreground tabular">{googleReviews}</span> avis au total sur{" "}
+                {multiSite
+                  ? `vos ${group.rated} fiche${group.rated > 1 ? "s" : ""} Google (moyenne pondérée)`
+                  : "votre fiche Google Business Profile"}
               </p>
             </KpiCard>
 
@@ -205,6 +219,12 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
               </CardContent>
             </Card>
           </section>
+
+          {multiSite && (
+            <section className="mt-4">
+              <LocationsCard locations={locations} nap={nap} />
+            </section>
+          )}
 
           {/* ---------------------------------------------------- Évolution */}
           <section className="mt-4">
