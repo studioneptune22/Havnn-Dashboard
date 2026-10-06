@@ -27,6 +27,7 @@ réalistes (Atelier Vogel Paysage, paysagiste à Strasbourg, face à 3 concurren
 | `/dashboard/audit-technique` | Les 4 piliers GEO : Schema.org, llms.txt, alignement NAP, sentiment de marque |
 | `/dashboard/rapports` | Rapports mensuels PDF + coffre-fort documentaire (URLs signées Storage) + bouton « Générer un rapport » |
 | `/dashboard/rapports/generer` | Rapport PDF généré à la volée (Cockpit, Benchmark, Structure & Factualité), via `@react-pdf/renderer` |
+| `/dashboard/journal` | Journal d'activité complet, par mois, filtrable par catégorie |
 
 ## Brancher Supabase
 
@@ -64,6 +65,16 @@ sa note Google. Sans établissement, le portail reste mono-site. Avec des établ
 - **Benchmark IA & Prompts** : une question peut être rattachée à un centre (`location_id`), avec un filtre ;
   les questions sans centre sont « transverses ».
 - Score, part de voix et taux de présence restent au niveau du groupe.
+
+## Avis Google : relevé quotidien (Vercel Cron)
+
+`GET /api/cron/google-reviews`, chaque jour à 5 h UTC (`vercel.json`), protégé par `CRON_SECRET`.
+Pour chaque fiche dont le **Place ID** est renseigné (`companies.google_place_id` pour un client
+mono-site, `locations.google_place_id` pour un établissement), la note et le nombre d'avis sont
+relevés via Places API (New) et mis à jour (dernier `geo_scores` ou `locations`). Chaque nouvel avis
+incrémente « avis capturés ce mois » et ajoute une entrée au journal (catégorie Avis Google).
+
+Variables : `GOOGLE_PLACES_API_KEY`, `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Alimentation hebdomadaire (Make.com / N8N)
 
