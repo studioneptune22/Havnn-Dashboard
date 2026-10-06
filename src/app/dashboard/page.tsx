@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Bot, Gauge, MapPinOff, Star } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Bot, Gauge, MapPinOff, Star } from "lucide-react";
 
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { ACTIVE_ENGINES, ENGINE_COLORS, ENGINE_LABELS } from "@/components/dashboard/chart-theme";
@@ -184,7 +185,7 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
 
           {/* ---------------------------------------------- Part de voix + journal */}
           <section className="mt-4 grid gap-4 xl:grid-cols-3">
-            <Card className="xl:col-span-2">
+            <Card className="min-w-0 xl:col-span-2">
               <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
                 <div className="space-y-1.5">
                   <CardTitle className="text-base">Part de Voix IA</CardTitle>
@@ -210,9 +211,17 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Journal d&apos;activité</CardTitle>
-                <CardDescription>Dernières actions réalisées par HAVNN</CardDescription>
+              <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+                <div className="space-y-1.5">
+                  <CardTitle className="text-base">Journal d&apos;activité</CardTitle>
+                  <CardDescription>Dernières actions réalisées par HAVNN</CardDescription>
+                </div>
+                <Link
+                  href="/dashboard/journal"
+                  className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-havnn-blue hover:underline"
+                >
+                  Tout voir <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </CardHeader>
               <CardContent>
                 <ActivityFeed items={activity} />
