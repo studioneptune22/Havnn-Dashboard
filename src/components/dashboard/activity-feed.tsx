@@ -6,6 +6,7 @@ import {
   MapPin,
   PenLine,
   Radar,
+  Search,
   Star,
   type LucideIcon,
 } from "lucide-react";
@@ -21,6 +22,7 @@ const CATEGORY: Record<ActivityCategory, { icon: LucideIcon; label: string }> = 
   llms_txt: { icon: Bot, label: "llms.txt" },
   report: { icon: FileBarChart, label: "Rapport" },
   monitoring: { icon: Radar, label: "Monitoring IA" },
+  seo: { icon: Search, label: "Référencement" },
   other: { icon: FileText, label: "Divers" },
 };
 

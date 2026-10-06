@@ -137,7 +137,7 @@ const CHECK: Record<CheckStatus, { label: string; color: string }> = {
 
 const ACTIVITY_LABEL: Record<ActivityLog["category"], string> = {
   schema: "Schema.org", nap: "NAP & annuaires", content: "Contenu", reviews: "Avis Google",
-  llms_txt: "llms.txt", report: "Rapport", monitoring: "Monitoring IA", other: "Action",
+  llms_txt: "llms.txt", report: "Rapport", monitoring: "Monitoring IA", seo: "Référencement", other: "Action",
 };
 
 // La police standard des PDF (Helvetica, encodage WinAnsi) n'a ni emoji ni symboles

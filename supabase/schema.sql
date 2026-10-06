@@ -29,7 +29,7 @@ exception when duplicate_object then null; end $$;
 
 do $$ begin
   create type public.activity_category as enum
-    ('schema', 'nap', 'content', 'reviews', 'llms_txt', 'report', 'monitoring', 'other');
+    ('schema', 'nap', 'content', 'reviews', 'llms_txt', 'report', 'monitoring', 'seo', 'other');
 exception when duplicate_object then null; end $$;
 
 do $$ begin
