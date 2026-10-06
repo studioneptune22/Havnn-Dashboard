@@ -13,6 +13,7 @@ export type ActivityCategory =
   | "llms_txt"
   | "report"
   | "monitoring"
+  | "seo"
   | "other";
 export type DocumentCategory = "monthly_report" | "roadmap" | "contract" | "csv_export" | "other";
 export type CheckStatus = "ok" | "warning" | "error" | "pending";
