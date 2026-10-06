@@ -58,3 +58,5 @@ Estimation :
 - Dashboard client (Cockpit, Benchmark IA & Prompts, Structure & Factualité, Documents & Rapports).
 - Clients multi-sites (centres), conformité NAP par fiche, rapport PDF à la demande.
 - Déploiement automatique Vercel sur `main`.
+- Journal d'activité complet (page dédiée, filtres) et catégorie « Référencement ».
+- Relevé quotidien automatique des avis Google (Places API, Vercel Cron).

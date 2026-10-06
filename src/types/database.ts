@@ -27,6 +27,8 @@ export interface Company {
   city: string | null;
   sector: string | null;
   plan_status: "onboarding" | "active" | "paused";
+  /** Fiche Google Maps (Place ID) : note et avis relevés chaque jour. */
+  google_place_id?: string | null;
   created_at: string;
 }
 
@@ -43,6 +45,7 @@ export interface Location {
   google_rating: number | null;
   google_reviews_total: number | null;
   google_maps_url: string | null;
+  google_place_id?: string | null;
   sort_order: number;
 }
 
