@@ -1,6 +1,6 @@
 # HAVNN — Feuille de route
 
-_Dernière mise à jour : 1er octobre 2026_
+_Dernière mise à jour : 7 octobre 2026_
 
 ## 🔧 Prochaines séances
 
@@ -15,6 +15,8 @@ _Dernière mise à jour : 1er octobre 2026_
 3. _(Option)_ **Page Admin HAVNN** : création de client par formulaire, bascule d'un client à l'autre.
 4. _(Option)_ **Rapport PDF V2** : graphiques, page de synthèse, police et couleurs de la charte.
 5. **Décision** : bouton « Générer un rapport » visible par les clients ou réservé à HAVNN.
+6. **Avis Google automatiques** (code en ligne) : migration 003, clé Places API (New) + alerte budget 5 €,
+   `GOOGLE_PLACES_API_KEY` et `CRON_SECRET` dans Vercel, Place ID des 11 fiches, test via « Run ».
 
 ## 🚀 Mi-octobre 2026 — Page « Testez votre visibilité IA »
 
@@ -46,12 +48,34 @@ Estimation :
 
 À faire **après** l'automatisation (même moteur de scan).
 
+## 🎯 Fin 2026 — Tracking GEO V2 (inspiration : outil de l'Agence Onze, sept. 2026)
+
+À faire **après** l'automatisation hebdomadaire, dans cet ordre :
+
+1. **Plusieurs passages par question** (environ 1 séance)
+   - chaque question posée 3 fois par semaine et par moteur au lieu d'une : les réponses des IA varient,
+     un seul passage donne un « cité / pas cité » au hasard ;
+   - affichage en **taux de mention** (ex. « cité dans 67 % des réponses ») et **tendance en points** par question ;
+   - coût estimé : quelques euros par mois et par client.
+2. **Sources lues par les IA** (1 à 2 séances)
+   - enregistrer les sources renvoyées par ChatGPT (recherche web) et Gemini (recherche Google), sans surcoût ;
+   - distinguer **mention** (nom dans le texte) et **citation** (site du client dans les sources) ;
+   - page « Sources à travailler » : sites lus par les IA qui citent les concurrents mais pas le client,
+     avec le nombre de questions concernées et l'action proposée (créer une fiche, demander une mention, article…) ;
+   - **avantage HAVNN : relier les sources au NAP** (« ChatGPT lit PagesJaunes sur 6 questions et votre fiche
+     PagesJaunes a une mauvaise adresse → priorité ») : du GEO local actionnable.
+3. **Écarté** : métriques SEO des sources (trafic, DR) et prix d'achat d'articles (Linkavista, adsy…) :
+   outils payants, et l'achat d'articles n'est pas le bon levier pour des artisans locaux.
+
 ## 📋 Clients
 
 - **Ax'home** : piliers Schema.org (page Contact), llms.txt, Sentiment ; corrections NAP restantes (PagesJaunes, Apple Plans).
 - **SDI** : piliers Schema.org, llms.txt, Sentiment ; fiche Maisons & Appartements (code postal 67560).
 - **Alsa Contrôle** : piliers Schema.org, llms.txt, Sentiment ; 13 fiches NAP à corriger (les noms d'abord).
-- **DG&CO, La Sainte Matière, SolarWrap** : activité, zone et concurrents pour préparer les questions.
+- **DG&CO** : contrôle de l'indexation du site vers le 13/10 puis à J+30 ; corrections NAP (téléphone Apple Plans en priorité) ; collecte d'avis Google (0 avis).
+- **La Sainte Matière** : fiche Bing « temporairement fermée » à rouvrir ; nom Google/Bing à aligner ; adresse Apple Plans ; page « Verrière d'atelier sur mesure ».
+- **Tous les clients** : relevé des piliers Schema.org, llms.txt et Sentiment (jamais fait).
+- **SolarWrap** : activité, zone et concurrents pour préparer les questions.
 
 ## ✅ Fait
 
