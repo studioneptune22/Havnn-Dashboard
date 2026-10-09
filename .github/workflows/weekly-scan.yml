@@ -1,0 +1,49 @@
+name: Relevé ChatGPT et Gemini
+
+# Chaque lundi à 5 h UTC (6 h ou 7 h à Paris), et à la demande depuis l'onglet Actions.
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "test = résultats visibles dans la vue admin seulement · live = publiés dans le Cockpit"
+        type: choice
+        options: [test, live]
+        default: test
+      company:
+        description: "Site du client (ex. dgco-fermetures.com), plusieurs séparés par des virgules. Vide = clients avec « Relevé automatique » activé."
+        required: false
+
+concurrency:
+  group: weekly-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    name: Relevé
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Relevé
+        # Le relevé planifié suit la variable SCAN_MODE (test tant qu'elle n'est pas passée à live).
+        run: npx tsx scripts/scan.ts --mode="${MODE}" ${COMPANY:+--company="$COMPANY"}
+        env:
+          MODE: ${{ inputs.mode || vars.SCAN_MODE || 'test' }}
+          COMPANY: ${{ inputs.company }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          GEMINI_ANALYSIS_MODEL: ${{ vars.GEMINI_ANALYSIS_MODEL }}
