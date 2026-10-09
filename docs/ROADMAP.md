@@ -1,24 +1,65 @@
 # HAVNN — Feuille de route
 
-_Dernière mise à jour : 7 octobre 2026_
+_Dernière mise à jour : 9 octobre 2026_
 
-## 🔧 Prochaines séances
+## 🗺️ Plan de déploiement du Cockpit (octobre 2026 → été 2027)
 
-1. **Automatisation hebdomadaire du relevé**
-   - Comptes OpenAI, Google AI Studio et Google Cloud (Places API) + limites de dépense.
-   - Liste des concurrents et variantes de noms par client (ex. « Ax'home » / « Axhome », règle Autovision hors groupe).
-   - Robot hebdomadaire (GitHub Actions, chaque lundi) : questions ChatGPT (GPT-5.6 Terra + recherche web) et
-     Gemini (3.8 Flash + recherche Google), analyse des réponses (Flash Lite), score, part de voix, notes Google.
+Issu de l'étude de marché du 9 octobre 2026 (Profound, Peec AI, Otterly, Semrush, outils français Meteoria /
+Qwairy / GetMint, Local Falcon, BrightLocal, Partoo, outil de l'Agence Onze). Environ 20 séances en 4 phases,
+chacune fermée par un contrôle. Positionnement : le cockpit GEO **local**, en français, qui relie la visibilité
+IA au NAP, aux avis et aux actions menées (journal).
+
+### Phase 1 — Fondations (oct. – déc. 2026, ≈ 5 séances)
+1. **Avis Google automatiques** (code en ligne, config de Jérôme) : migration 003, clé Places API (New) + alerte
+   budget 5 €, `GOOGLE_PLACES_API_KEY` et `CRON_SECRET` dans Vercel, Place ID des 11 fiches, test via « Run ».
+2. **Relevé automatique hebdomadaire ChatGPT + Gemini** (2 séances) : positions, score, part de voix,
+   **aperçu de la citation** (extrait de réponse par question).
+   - Comptes OpenAI et Google AI Studio + limites de dépense.
+   - Concurrents et variantes de noms par client (ex. « Ax'home » / « Axhome », règle Autovision hors groupe).
+   - Robot (GitHub Actions, chaque lundi) : ChatGPT (GPT-5.6 Terra + recherche web), Gemini (3.8 Flash +
+     recherche Google), analyse des réponses (Flash Lite).
    - Calibrage 1 à 2 semaines en parallèle d'un relevé manuel.
-2. **Rapport PDF hebdomadaire** : archivage automatique dans « Historique des rapports », puis brouillon Gmail
-   (Google Workspace, mot de passe d'application) avec le PDF en pièce jointe ; envoi 100 % automatique plus tard.
-3. _(Option)_ **Page Admin HAVNN** : création de client par formulaire, bascule d'un client à l'autre.
-4. _(Option)_ **Rapport PDF V2** : graphiques, page de synthèse, police et couleurs de la charte.
-5. **Décision** : bouton « Générer un rapport » visible par les clients ou réservé à HAVNN.
-6. **Avis Google automatiques** (code en ligne) : migration 003, clé Places API (New) + alerte budget 5 €,
-   `GOOGLE_PLACES_API_KEY` et `CRON_SECRET` dans Vercel, Place ID des 11 fiches, test via « Run ».
+3. **Vue admin** (1 séance) : passer d'un client à l'autre, créer un client par formulaire.
+4. **Ajout manuel au journal** depuis la vue admin, sans SQL (1/2 séance).
+5. **Rapport PDF archivé automatiquement** + brouillon Gmail au client (1 séance).
+6. **app.havnn.fr** et vrai logo dans l'application (1/2 séance).
+7. **Décision** : bouton « Générer un rapport » visible par les clients ou réservé à HAVNN.
 
-## 🚀 Mi-octobre 2026 — Page « Testez votre visibilité IA »
+Contrôle : relevé automatique = relevé manuel sur les clients existants.
+
+### Phase 2 — Mesure fiable (janv. – févr. 2027, ≈ 6,5 séances)
+1. **Plusieurs passages par question** (3 par semaine et par moteur), taux de mention, tendance en points (1 séance).
+2. **Sources lues par les IA** enregistrées à chaque passage, **mention ou citation** (site du client dans les sources) (1,5 séance).
+3. **Détection automatique des mentions et citations**, y compris des concurrents non listés (1/2 séance).
+4. **Thèmes (tags) et zones par question** : filtrer « fenêtres », « Strasbourg Nord »… (1/2 séance).
+5. **Veille des mentions sur le web** : annuaires, presse locale, forums (1 séance).
+6. **Page « Testez votre visibilité IA »** pour les prospects (2 séances, détail plus bas).
+
+Contrôle : chiffres stables d'une semaine à l'autre.
+
+### Phase 3 — Relation client (mars – avr. 2027, ≈ 4 séances)
+1. **Messagerie avec Jérôme / contacter le support** depuis le cockpit (1 séance).
+2. **Champ « proposer une question »**, validée par Jérôme avant d'entrer dans le suivi (1/2 séance).
+3. **Réponses aux avis Google rédigées par l'IA**, relues avant publication (1,5 séance). Publication directe =
+   accès à l'API Google Business Profile (demande à Google) ; en attendant, copier-coller.
+4. **Alertes par mail** : citation perdue, avis négatif, concurrent qui passe devant (1/2 séance).
+5. **Récapitulatif mensuel automatique** par mail (1/2 séance).
+
+Contrôle : les clients utilisent le cockpit (connexions, messages, questions proposées).
+
+### Phase 4 — Avantage local (mai – juil. 2027, ≈ 5 séances)
+1. **Page « Sources à travailler » reliée au NAP** : « ChatGPT lit PagesJaunes sur 6 questions et votre fiche
+   a une mauvaise adresse → priorité » (1 séance).
+2. **Audit automatique du site** : Schema.org, llms.txt, robots.txt, pages lisibles par les IA (1 séance),
+   réutilise l'onglet « Analyse de contenu » de la page prospects.
+3. **Questions posées commune par commune** : carte de visibilité locale, façon Local Falcon (1 séance).
+4. **Moteurs supplémentaires** : Perplexity, Copilot, mode IA de Google, Mistral (1/4 séance par moteur).
+5. **Export CSV** et **rapport PDF V2** : graphiques, synthèse, charte (1 séance).
+
+**Écartés** : métriques SEO des sources et prix d'achat d'articles (Onze), volumes de recherche des prompts
+(Profound), analyse des robots IA sur le site, marque blanche.
+
+## 🚀 Détail — Page « Testez votre visibilité IA » (phase 2)
 
 Page d'atterrissage publique pour les prospects (inspiration : https://www.geobuster.ai/) :
 - formulaire (entreprise, ville, activité, site, email) ;
@@ -47,25 +88,6 @@ Estimation :
 - version anglaise : 1/2 séance (non prioritaire pour des TPE/PME alsaciennes).
 
 À faire **après** l'automatisation (même moteur de scan).
-
-## 🎯 Fin 2026 — Tracking GEO V2 (inspiration : outil de l'Agence Onze, sept. 2026)
-
-À faire **après** l'automatisation hebdomadaire, dans cet ordre :
-
-1. **Plusieurs passages par question** (environ 1 séance)
-   - chaque question posée 3 fois par semaine et par moteur au lieu d'une : les réponses des IA varient,
-     un seul passage donne un « cité / pas cité » au hasard ;
-   - affichage en **taux de mention** (ex. « cité dans 67 % des réponses ») et **tendance en points** par question ;
-   - coût estimé : quelques euros par mois et par client.
-2. **Sources lues par les IA** (1 à 2 séances)
-   - enregistrer les sources renvoyées par ChatGPT (recherche web) et Gemini (recherche Google), sans surcoût ;
-   - distinguer **mention** (nom dans le texte) et **citation** (site du client dans les sources) ;
-   - page « Sources à travailler » : sites lus par les IA qui citent les concurrents mais pas le client,
-     avec le nombre de questions concernées et l'action proposée (créer une fiche, demander une mention, article…) ;
-   - **avantage HAVNN : relier les sources au NAP** (« ChatGPT lit PagesJaunes sur 6 questions et votre fiche
-     PagesJaunes a une mauvaise adresse → priorité ») : du GEO local actionnable.
-3. **Écarté** : métriques SEO des sources (trafic, DR) et prix d'achat d'articles (Linkavista, adsy…) :
-   outils payants, et l'achat d'articles n'est pas le bon levier pour des artisans locaux.
 
 ## 📋 Clients
 
