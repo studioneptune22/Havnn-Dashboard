@@ -29,6 +29,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Tests
+        run: npm test
+
       # Sans variables Supabase, le build se fait en mode démo.
       - name: Build
         run: npm run build

@@ -28,6 +28,7 @@ réalistes (Atelier Vogel Paysage, paysagiste à Strasbourg, face à 3 concurren
 | `/dashboard/rapports` | Rapports mensuels PDF + coffre-fort documentaire (URLs signées Storage) + bouton « Générer un rapport » |
 | `/dashboard/rapports/generer` | Rapport PDF généré à la volée (Cockpit, Benchmark, Structure & Factualité), via `@react-pdf/renderer` |
 | `/dashboard/journal` | Journal d'activité complet, par mois, filtrable par catégorie |
+| `/dashboard/admin` | Vue HAVNN (rôle `havnn_admin`) : clients, nouveau client, accès portail, journal, questions, concurrents, relevé auto |
 
 ## Brancher Supabase
 
@@ -65,6 +66,38 @@ sa note Google. Sans établissement, le portail reste mono-site. Avec des établ
 - **Benchmark IA & Prompts** : une question peut être rattachée à un centre (`location_id`), avec un filtre ;
   les questions sans centre sont « transverses ».
 - Score, part de voix et taux de présence restent au niveau du groupe.
+
+## Vue admin HAVNN
+
+Un utilisateur `havnn_admin` voit un **sélecteur de client** dans la barre latérale (cookie `havnn_company`) :
+tout le portail bascule sur ce client. La page `/dashboard/admin` permet, sans SQL :
+
+- de créer un client et son **accès au portail** (mot de passe provisoire affiché une fois, à envoyer par SMS) ;
+- d'ajouter ou supprimer des entrées du **journal d'activité** ;
+- de modifier les **questions suivies** (une par ligne, `[Centre] Question` pour un multi-sites) ;
+- de définir la marque du client et les **concurrents**, avec leurs variantes de nom (`Nom | variante, variante`) ;
+- d'inclure le client dans le **relevé automatique** et de consulter ses relevés question par question.
+
+Les écritures passent par des server actions qui vérifient le rôle, puis utilisent la clé `service_role`.
+Migration requise : `supabase/migrations/004_admin_scan.sql`.
+
+## Relevé automatique ChatGPT / Gemini (GitHub Actions)
+
+`.github/workflows/weekly-scan.yml`, chaque lundi à 5 h UTC et à la demande (onglet Actions › « Relevé ChatGPT et
+Gemini » › Run workflow). Pour chaque client dont « Relevé automatique » est activé, `scripts/scan.ts` pose les
+questions suivies à ChatGPT (API Responses + recherche web, localisée sur la ville du client) et à Gemini (recherche
+Google), puis un modèle Gemini léger liste les entreprises recommandées dans chaque réponse pour en déduire la
+position du client. Les marques suivies sont repérées par leurs variantes (sans tenir compte des majuscules,
+accents et séparateurs).
+
+- **Mode `test`** (par défaut) : résultat enregistré dans `scan_runs` uniquement, comparé au Cockpit dans la vue admin.
+- **Mode `live`** : publie questions, part de voix, score (même formule que le relevé manuel) et une entrée de journal.
+  Au-delà de 25 % de réponses en erreur, rien n'est publié.
+
+Secrets du dépôt : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`.
+Variables (optionnelles) : `SCAN_MODE` (`test` ou `live` pour le relevé du lundi), `OPENAI_MODEL`, `GEMINI_MODEL`,
+`GEMINI_ANALYSIS_MODEL`. Essai local : `npm run scan -- --mode=test --company=exemple.fr --no-save`.
+Tests : `npm test` (réponses simulées).
 
 ## Avis Google : relevé quotidien (Vercel Cron)
 
@@ -129,4 +162,4 @@ supabase/schema.sql · supabase/seed.sql · supabase/migrations/
 
 ## Scripts
 
-`npm run dev` · `npm run build` · `npm run start` · `npm run lint` · `npm run typecheck`
+`npm run dev` · `npm run build` · `npm run start` · `npm run lint` · `npm run typecheck` · `npm test` · `npm run scan`

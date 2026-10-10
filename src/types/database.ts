@@ -29,6 +29,8 @@ export interface Company {
   plan_status: "onboarding" | "active" | "paused";
   /** Fiche Google Maps (Place ID) : note et avis relevés chaque jour. */
   google_place_id?: string | null;
+  /** Inclus dans le relevé automatique hebdomadaire ChatGPT / Gemini. */
+  auto_scan?: boolean;
   created_at: string;
 }
 
@@ -155,4 +157,27 @@ export interface SentimentSnapshot {
   critical_pct: number;
   summary: string | null;
   recorded_at: string;
+}
+
+/** Marque reconnue dans les réponses des IA : le client ou un concurrent suivi. */
+export interface TrackedBrand {
+  id: string;
+  company_id: string;
+  name: string;
+  /** Variantes de nom reconnues (« Axhome » pour « Ax'home »…). */
+  aliases: string[];
+  is_client: boolean;
+  sort_order: number;
+}
+
+/** Relevé automatique : `test` = calibrage (Cockpit inchangé), `live` = publié dans le Cockpit. */
+export interface ScanRun {
+  id: string;
+  company_id: string;
+  mode: "test" | "live";
+  status: "ok" | "partial" | "error";
+  summary: import("@/lib/scan/types").ScanSummary | Record<string, never>;
+  results: import("@/lib/scan/types").QuestionResult[];
+  error: string | null;
+  created_at: string;
 }

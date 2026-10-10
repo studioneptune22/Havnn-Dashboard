@@ -1,4 +1,4 @@
-import { FileText, Gauge, History, MessageSquareText, ShieldCheck, type LucideIcon } from "lucide-react";
+import { FileText, Gauge, History, MessageSquareText, Settings2, ShieldCheck, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -14,3 +14,11 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/journal", label: "Journal d'activité", description: "Toutes les actions HAVNN", icon: History },
   { href: "/dashboard/rapports", label: "Documents & Rapports", description: "Rapports & coffre-fort", icon: FileText },
 ];
+
+/** Entrée réservée aux consultants HAVNN. */
+export const ADMIN_NAV_ITEM: NavItem = {
+  href: "/dashboard/admin",
+  label: "Administration",
+  description: "Clients, journal, relevés",
+  icon: Settings2,
+};

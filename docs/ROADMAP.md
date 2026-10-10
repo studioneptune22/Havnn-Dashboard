@@ -13,14 +13,16 @@ IA au NAP, aux avis et aux actions menées (journal).
 1. **Avis Google automatiques** (code en ligne, config de Jérôme) : migration 003, clé Places API (New) + alerte
    budget 5 €, `GOOGLE_PLACES_API_KEY` et `CRON_SECRET` dans Vercel, Place ID des 11 fiches, test via « Run ».
 2. **Relevé automatique hebdomadaire ChatGPT + Gemini** (2 séances) : positions, score, part de voix,
-   **aperçu de la citation** (extrait de réponse par question).
+   **aperçu de la citation** (extrait de réponse par question). **Code en ligne (9 oct.)**, testé sur réponses
+   simulées ; reste la config de Jérôme (comptes, clés en secrets GitHub, variantes de noms) et le calibrage.
    - Comptes OpenAI et Google AI Studio + limites de dépense.
    - Concurrents et variantes de noms par client (ex. « Ax'home » / « Axhome », règle Autovision hors groupe).
    - Robot (GitHub Actions, chaque lundi) : ChatGPT (GPT-5.6 Terra + recherche web), Gemini (3.8 Flash +
      recherche Google), analyse des réponses (Flash Lite).
    - Calibrage 1 à 2 semaines en parallèle d'un relevé manuel.
-3. **Vue admin** (1 séance) : passer d'un client à l'autre, créer un client par formulaire.
-4. **Ajout manuel au journal** depuis la vue admin, sans SQL (1/2 séance).
+3. ✅ **Vue admin** : passer d'un client à l'autre, créer un client et son accès portail, questions et concurrents
+   sans SQL (migration 004 à exécuter).
+4. ✅ **Ajout manuel au journal** depuis la vue admin, sans SQL.
 5. **Rapport PDF archivé automatiquement** + brouillon Gmail au client (1 séance).
 6. **app.havnn.fr** et vrai logo dans l'application (1/2 séance).
 7. **Décision** : bouton « Générer un rapport » visible par les clients ou réservé à HAVNN.
@@ -106,3 +108,5 @@ Estimation :
 - Déploiement automatique Vercel sur `main`.
 - Journal d'activité complet (page dédiée, filtres) et catégorie « Référencement ».
 - Relevé quotidien automatique des avis Google (Places API, Vercel Cron).
+- Vue admin HAVNN (sélecteur de client, création de client et d'accès, journal, questions, concurrents).
+- Robot de relevé ChatGPT + Gemini (GitHub Actions, modes test et publié).

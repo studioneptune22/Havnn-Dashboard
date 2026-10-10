@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -29,14 +30,22 @@ import { periodStart, type Period } from "./period";
 
 export interface Session {
   user: AppUser;
+  /** Entreprise affichée : celle de l'utilisateur, ou le client choisi dans la vue admin. */
   company: Company;
   demo: boolean;
+  /** Consultant HAVNN (rôle havnn_admin) : vue admin et sélecteur de client. */
+  admin: boolean;
 }
+
+/** Cookie du client consulté par un admin HAVNN (sélecteur de la barre latérale). */
+export const ADMIN_COMPANY_COOKIE = "havnn_company";
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const getSession = cache(async (): Promise<Session> => {
   if (!isSupabaseConfigured) {
     return {
       demo: true,
+      admin: false,
       company: mock.mockCompany,
       user: {
         id: "demo-user",
@@ -60,17 +69,35 @@ export const getSession = cache(async (): Promise<Session> => {
     .eq("id", authUser.id)
     .single<AppUser>();
 
-  if (!profile?.company_id) redirect("/login?error=no_company");
+  const admin = profile?.role === "havnn_admin";
+  if (!profile || (!profile.company_id && !admin)) redirect("/login?error=no_company");
 
-  const { data: company } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("id", profile.company_id)
-    .single<Company>();
+  // Un admin consulte le client choisi dans le sélecteur (le RLS lui ouvre toutes les entreprises).
+  const chosen = admin ? cookies().get(ADMIN_COMPANY_COOKIE)?.value : undefined;
+  const companyId = chosen && UUID_RE.test(chosen) ? chosen : profile.company_id;
+
+  let company: Company | null = null;
+  if (companyId) {
+    const { data } = await supabase.from("companies").select("*").eq("id", companyId).maybeSingle<Company>();
+    company = data;
+  }
+  if (!company && admin) {
+    // Client supprimé ou admin sans entreprise : premier client par ordre alphabétique.
+    const { data } = await supabase.from("companies").select("*").order("name").limit(1).maybeSingle<Company>();
+    company = data;
+  }
 
   if (!company) redirect("/login?error=no_company");
 
-  return { user: profile, company, demo: false };
+  return { user: profile, company, demo: false, admin };
+});
+
+/** Liste des clients pour le sélecteur de la vue admin. */
+export const getCompanyOptions = cache(async (): Promise<Pick<Company, "id" | "name">[]> => {
+  if (!isSupabaseConfigured) return [];
+  const supabase = createClient();
+  const { data } = await supabase.from("companies").select("id, name").order("name");
+  return data ?? [];
 });
 
 // -----------------------------------------------------------------------------
