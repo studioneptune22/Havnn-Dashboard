@@ -36,7 +36,8 @@ const PLAN_STATUSES = ["onboarding", "active", "paused"] as const;
 
 class AdminError extends Error {}
 
-async function requireAdmin() {
+/** Vérifie que l'utilisateur connecté est un consultant HAVNN ; renvoie son client Supabase (RLS admin). */
+async function checkAdmin() {
   if (!isSupabaseConfigured) throw new AdminError("Indisponible en mode démo.");
   const supabase = createClient();
   const {
@@ -45,6 +46,15 @@ async function requireAdmin() {
   if (!user) throw new AdminError("Session expirée : reconnectez-vous.");
   const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).maybeSingle();
   if (profile?.role !== "havnn_admin") throw new AdminError("Action réservée aux consultants HAVNN.");
+  return supabase;
+}
+
+/** Admin vérifié → client service_role pour écrire (le RLS n'autorise aucune écriture). */
+async function requireAdmin() {
+  await checkAdmin();
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new AdminError("Clé SUPABASE_SERVICE_ROLE_KEY absente de Vercel : ajoutez-la puis redéployez.");
+  }
   return createAdminClient();
 }
 
@@ -80,13 +90,20 @@ function setActiveCompany(id: string) {
 }
 
 // ------------------------------------------------------------------ Client actif
-export async function switchCompany(formData: FormData) {
-  const db = await requireAdmin();
-  const id = companyIdFrom(formData);
-  const { data } = await db.from("companies").select("id").eq("id", id).maybeSingle();
-  if (!data) throw new AdminError("Client introuvable.");
-  setActiveCompany(id);
-  revalidatePath("/dashboard", "layout");
+export async function switchCompany(formData: FormData): Promise<ActionState> {
+  try {
+    // Lecture seule : le compte admin suffit (le RLS lui ouvre toutes les entreprises).
+    const supabase = await checkAdmin();
+    const id = companyIdFrom(formData);
+    const { data } = await supabase.from("companies").select("id").eq("id", id).maybeSingle();
+    if (!data) throw new AdminError("Client introuvable.");
+    setActiveCompany(id);
+    revalidatePath("/dashboard", "layout");
+    return {};
+  } catch (e) {
+    console.error("[admin] switchCompany", e);
+    return { error: e instanceof AdminError ? e.message : "Impossible de changer de client." };
+  }
 }
 
 // --------------------------------------------------------------- Nouveau client

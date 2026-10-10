@@ -19,7 +19,8 @@ export function CompanyRowLink({ id, active, children }: { id: string; active: b
         const fd = new FormData();
         fd.set("company_id", id);
         startTransition(async () => {
-          await switchCompany(fd);
+          const { error } = await switchCompany(fd);
+          if (error) return window.alert(error);
           router.refresh();
         });
       }}

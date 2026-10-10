@@ -26,7 +26,8 @@ export function CompanySwitcher({
     const fd = new FormData();
     fd.set("company_id", id);
     startTransition(async () => {
-      await switchCompany(fd);
+      const { error } = await switchCompany(fd);
+      if (error) return window.alert(error);
       // Les filtres d'URL (centre…) appartiennent au client précédent.
       router.replace(pathname, { scroll: false });
       router.refresh();
