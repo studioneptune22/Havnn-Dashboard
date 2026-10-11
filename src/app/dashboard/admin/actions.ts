@@ -277,6 +277,18 @@ function provisionalPassword() {
   return Array.from({ length: 4 }, () => Array.from({ length: 4 }, () => chars[randomInt(chars.length)]).join("")).join("-");
 }
 
+/** Identifiant de connexion Supabase d'une adresse email (parcours des comptes, 1 000 par page). */
+async function findAuthUserId(db: ReturnType<typeof createAdminClient>, email: string) {
+  for (let page = 1; page <= 20; page++) {
+    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw new Error(error.message);
+    const user = data.users.find((u) => u.email?.toLowerCase() === email);
+    if (user) return user.id;
+    if (data.users.length < 1000) return undefined;
+  }
+  return undefined;
+}
+
 export async function createClientAccess(_prev: ActionState, formData: FormData): Promise<ActionState> {
   return run(async () => {
     const db = await requireAdmin();
@@ -298,13 +310,17 @@ export async function createClientAccess(_prev: ActionState, formData: FormData)
     if (!userId) {
       password = provisionalPassword();
       const { data, error } = await db.auth.admin.createUser({ email, password, email_confirm: true });
+      if (error && !/already|registered|exists/i.test(error.message)) throw new Error(error.message);
       if (error) {
-        if (/already|registered|exists/i.test(error.message)) {
-          throw new AdminError("Un compte existe déjà avec cet email dans Supabase sans être rattaché : contactez le support technique.");
-        }
-        throw new Error(error.message);
+        // Compte de connexion créé auparavant (Supabase, essai précédent) mais jamais rattaché :
+        // on le retrouve et on lui donne un nouveau mot de passe provisoire.
+        userId = await findAuthUserId(db, email);
+        if (!userId) throw new Error(error.message);
+        const { error: updateError } = await db.auth.admin.updateUserById(userId, { password, email_confirm: true });
+        if (updateError) throw new Error(updateError.message);
+      } else {
+        userId = data.user.id;
       }
-      userId = data.user.id;
     }
 
     const { error } = await db
