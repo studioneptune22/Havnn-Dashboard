@@ -41,8 +41,9 @@ Ordre de réalisation (≈ 6 séances), chaque brique servant aussi aux clients 
   (https://cal.com/jerome-geo/15min). Pas de relevé mensuel pour les comptes lite.
 - **Ordre** : 0. QR code et page d'attente → 1. envoi d'e-mails depuis havnn.fr (Resend + DNS, brique commune)
   → 2. test lite + onglet Leads → 3. rapport mensuel (premier vrai rapport : 28 novembre).
-- **À fournir par Jérôme** : l'outil de havnn.fr (WordPress, Webflow…), l'adresse actuelle du cockpit, le feu
-  vert pour l'étape 1.
+- ✅ **Cockpit sur https://cockpit.havnn.fr** (CNAME o2switch → Vercel, Site URL et Redirect URL Supabase à
+  jour). havnn.fr est un WordPress hébergé chez o2switch (cPanel).
+- Prochaine étape : envoi d'e-mails depuis havnn.fr (Resend, région UE).
 
 ## 📨 Rapport mensuel « Votre rapport mensuel GEO »
 
