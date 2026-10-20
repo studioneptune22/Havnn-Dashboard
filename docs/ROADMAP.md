@@ -48,7 +48,7 @@ IA au NAP, aux avis et aux actions menées (journal).
    simulées ; reste la config de Jérôme (comptes, clés en secrets GitHub, variantes de noms) et le calibrage.
    - Comptes OpenAI et Google AI Studio + limites de dépense.
    - Concurrents et variantes de noms par client (ex. « Ax'home » / « Axhome », règle Autovision hors groupe).
-   - Robot (GitHub Actions, chaque lundi) : ChatGPT (GPT-5.6 Terra + recherche web), Gemini (3.8 Flash +
+   - Robot (GitHub Actions, chaque lundi) : ChatGPT (gpt-6.1-sol + recherche web, secours gpt-5.6-terra), Gemini (3.8 Flash +
      recherche Google), analyse des réponses (Flash Lite).
    - Calibrage 1 à 2 semaines en parallèle d'un relevé manuel.
 3. ✅ **Vue admin** : passer d'un client à l'autre, créer un client et son accès portail, questions et concurrents
