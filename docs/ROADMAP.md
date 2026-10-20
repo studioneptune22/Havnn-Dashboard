@@ -31,10 +31,12 @@ Ordre de réalisation (≈ 6 séances), chaque brique servant aussi aux clients 
 
 - **Impression des flyers : fin de semaine / début de semaine prochaine.** Un lien Bitly par support (suivi des
   origines, demandé par Jérôme) ; chaque lien Bitly pointe vers une adresse sur havnn.fr avec la source
-  (proposée : `havnn.fr/test-ia?s=flyer`, `?s=carte`…). Le QR code encode le lien Bitly. Comme la destination est
-  une adresse de havnn.fr, elle reste redirigeable même si Bitly ne permet pas de modifier le lien ; la source est
-  aussi enregistrée avec chaque lead. Page d'attente tant que le test n'est pas en ligne : le test doit être prêt
-  pour la **distribution**, pas pour l'impression. Adresse définitive encore à arrêter.
+  (`https://www.havnn.fr/test-visibilite-ia/?utm_source=flyer&utm_medium=qr`, `utm_source=carte`…). Ne jamais
+  utiliser `?s=` : c'est le paramètre de recherche de WordPress. Le QR code encode le lien Bitly. Comme la
+  destination est une adresse de havnn.fr, elle reste redirigeable même si Bitly ne permet pas de modifier le lien ;
+  la source est transmise au test et enregistrée avec chaque lead. Page WordPress créée par le projet Claude « site
+  havnn.fr » : d'abord page d'attente avec bouton Cal.com, puis bouton « Lancer mon test » vers le test du cockpit
+  (paramètres utm_* transmis). Le test doit être prêt pour la **distribution**, pas pour l'impression.
 - **Un seul test par entreprise** : juste ce qu'il faut pour donner envie de réserver l'audit flash gratuit
   (https://cal.com/jerome-geo/15min). Pas de relevé mensuel pour les comptes lite.
 - **Ordre** : 0. QR code et page d'attente → 1. envoi d'e-mails depuis havnn.fr (Resend + DNS, brique commune)
