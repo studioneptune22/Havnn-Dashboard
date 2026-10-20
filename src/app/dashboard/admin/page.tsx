@@ -38,7 +38,9 @@ export default async function AdminPage({ searchParams }: { searchParams: { ongl
   const [overview, data] = await Promise.all([getClientsOverview(), getAdminClientData(company.id)]);
   const tab = TABS.some((t) => t.value === searchParams.onglet) ? searchParams.onglet : "clients";
   const client = data.brands.find((b) => b.is_client);
-  const competitors = data.brands.filter((b) => !b.is_client);
+  const competitors = data.brands.filter((b) => !b.is_client && !b.ignored);
+  const autoAdded = competitors.filter((b) => b.auto_added);
+  const ignoredBrands = data.brands.filter((b) => b.ignored);
   const cockpitScore = overview.find((o) => o.company.id === company.id)?.score ?? null;
 
   return (
@@ -192,6 +194,22 @@ export default async function AdminPage({ searchParams }: { searchParams: { ongl
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {(autoAdded.length > 0 || ignoredBrands.length > 0) && (
+                <div className="mb-4 space-y-1 rounded-lg border bg-background/40 p-3 text-xs text-muted-foreground">
+                  {autoAdded.length > 0 && (
+                    <p>
+                      <span className="font-medium text-foreground">Ajoutés par le robot</span> (cités régulièrement par les IA) :{" "}
+                      {autoAdded.map((b) => b.name).join(", ")}. Retirez-les de la liste s&apos;ils ne sont pas de vrais concurrents.
+                    </p>
+                  )}
+                  {ignoredBrands.length > 0 && (
+                    <p>
+                      <span className="font-medium text-foreground">Écartés</span> (jamais rajoutés par le robot) :{" "}
+                      {ignoredBrands.map((b) => b.name).join(", ")}. Remettez un nom dans la liste pour le suivre à nouveau.
+                    </p>
+                  )}
+                </div>
+              )}
               <BrandsForm
                 key={company.id}
                 companyId={company.id}

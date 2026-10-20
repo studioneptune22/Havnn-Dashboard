@@ -25,7 +25,7 @@ export function NewCompanyForm() {
         <Field label="Site web" htmlFor="nc-domain" hint="Sert à identifier le client (webhook, relevés).">
           <Input id="nc-domain" name="domain" maxLength={200} placeholder="menuiserie-exemple.fr" />
         </Field>
-        <Field label="Ville" htmlFor="nc-city" hint="Localise la recherche web de ChatGPT.">
+        <Field label="Ville" htmlFor="nc-city" hint="Affichée dans le Cockpit du client.">
           <Input id="nc-city" name="city" maxLength={120} placeholder="Strasbourg" />
         </Field>
         <Field label="Activité" htmlFor="nc-sector">

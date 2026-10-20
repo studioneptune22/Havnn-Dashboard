@@ -61,9 +61,11 @@ IA au NAP, aux avis et aux actions menées (journal).
 Contrôle : relevé automatique = relevé manuel sur les clients existants.
 
 ### Phase 2 — Mesure fiable (janv. – févr. 2027, ≈ 6,5 séances)
-1. **Plusieurs passages par question** (3 par semaine et par moteur), taux de mention, tendance en points (1 séance).
+1. ✅ **Plusieurs passages par question** (3 par moteur, 5 si le résultat hésite), taux de mention « cité 2/3 »,
+   badges solide / fragile / absent. Reste : tendance en points au-delà du bruit (seuil fixé après calibrage).
 2. **Sources lues par les IA** enregistrées à chaque passage, **mention ou citation** (site du client dans les sources) (1,5 séance).
-3. **Détection automatique des mentions et citations**, y compris des concurrents non listés (1/2 séance).
+3. ✅ **Détection automatique des concurrents non listés** : ajoutés s'ils sont cités dans au moins 2 questions et
+   3 réponses ; un concurrent retiré à la main n'est jamais rajouté.
 4. **Thèmes (tags) et zones par question** : filtrer « fenêtres », « Strasbourg Nord »… (1/2 séance).
 5. **Veille des mentions sur le web** : annuaires, presse locale, forums (1 séance).
 6. **Page « Testez votre visibilité IA »** pour les prospects (2 séances, détail plus bas).

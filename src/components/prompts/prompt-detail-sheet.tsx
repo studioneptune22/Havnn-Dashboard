@@ -50,7 +50,7 @@ export function PromptDetailSheet({
                     <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: ENGINE_COLORS[engine] }} />
                     {ENGINE_LABELS[engine]}
                   </div>
-                  <EngineStatus status={prompt[`${engine}_status`]} position={prompt[`${engine}_position`]} />
+                  <EngineStatus status={prompt[`${engine}_status`]} position={prompt[`${engine}_position`]} runs={prompt.mention_runs?.[engine]} />
                 </div>
               ))}
             </div>

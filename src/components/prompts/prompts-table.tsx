@@ -146,7 +146,7 @@ export function PromptsTable({ prompts, locations = [] }: { prompts: PromptMonit
               </TableCell>
               {ENGINES.map((e) => (
                 <TableCell key={e}>
-                  <EngineStatus status={p[`${e}_status`]} position={p[`${e}_position`]} />
+                  <EngineStatus status={p[`${e}_status`]} position={p[`${e}_position`]} runs={p.mention_runs?.[e]} />
                 </TableCell>
               ))}
               <TableCell className="text-xs text-muted-foreground tabular">{formatDate(p.scanned_at)}</TableCell>

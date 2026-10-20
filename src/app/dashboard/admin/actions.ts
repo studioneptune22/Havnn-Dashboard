@@ -244,9 +244,23 @@ export async function saveBrands(_prev: ActionState, formData: FormData): Promis
       throw new AdminError(`« ${clientName} » est à la fois le client et un concurrent.`);
     }
 
+    const { data: current, error: readError } = await db
+      .from("tracked_brands")
+      .select("name, aliases, is_client, auto_added, ignored")
+      .eq("company_id", companyId);
+    if (readError) throw new Error(readError.message);
+    const kept = new Set(brands.map((b) => b.name.toLowerCase()));
+    const autoAdded = new Set((current ?? []).filter((b) => b.auto_added).map((b) => (b.name as string).toLowerCase()));
+
+    // Concurrent retiré de la liste (ou déjà écarté) : gardé comme « ignoré » pour que le robot
+    // ne le rajoute jamais. Le remettre dans la liste suffit à le réactiver.
+    const ignored = (current ?? []).filter((b) => !b.is_client && !kept.has((b.name as string).toLowerCase()));
+    const newlyIgnored = ignored.filter((b) => !b.ignored);
+
     const rows = [
-      { name: clientName, aliases: parseAliases(text(formData, "client_aliases", 2000), clientName), is_client: true },
-      ...brands.map((b) => ({ ...b, is_client: false })),
+      { name: clientName, aliases: parseAliases(text(formData, "client_aliases", 2000), clientName), is_client: true, auto_added: false, ignored: false },
+      ...brands.map((b) => ({ ...b, is_client: false, auto_added: autoAdded.has(b.name.toLowerCase()), ignored: false })),
+      ...ignored.map((b) => ({ name: b.name as string, aliases: (b.aliases as string[]) ?? [], is_client: false, auto_added: Boolean(b.auto_added), ignored: true })),
     ].map((b, i) => ({ company_id: companyId, ...b, sort_order: i }));
 
     // Remplacement complet : la liste saisie fait foi.
@@ -254,7 +268,10 @@ export async function saveBrands(_prev: ActionState, formData: FormData): Promis
     if (delError) throw new Error(delError.message);
     const { error } = await db.from("tracked_brands").insert(rows);
     if (error) throw new Error(error.message);
-    return `Marques enregistrées : le client et ${brands.length} concurrent${brands.length > 1 ? "s" : ""}.`;
+    const removedNote = newlyIgnored.length
+      ? ` ${newlyIgnored.map((b) => b.name).join(", ")} : écarté${newlyIgnored.length > 1 ? "s" : ""}, le robot ne ${newlyIgnored.length > 1 ? "les" : "le"} rajoutera pas.`
+      : "";
+    return `Marques enregistrées : le client et ${brands.length} concurrent${brands.length > 1 ? "s" : ""}.${removedNote}`;
   });
 }
 

@@ -15,10 +15,12 @@ import { groupGoogleRating } from "@/lib/locations";
 import { napConformity } from "@/lib/scores";
 import type { Company, GeoScore, Location, NapCitation, TrackedBrand } from "@/types/database";
 
-import { analyzeAnswer, type BrandMatcher } from "./analyze";
+import { analyzeAnswer, findMentions, matchBrand, type BrandMatcher } from "./analyze";
+import { brandKey, brandsToAdd, discoverBrands } from "./discover";
 import type { AiClient } from "./engines";
 import { computeMetrics, mainSnippet } from "./metrics";
-import type { EngineResult, QuestionResult, ScanEngine, ScanSummary } from "./types";
+import { aggregateRuns, citedRuns, isUncertain, type RunDetail } from "./runs";
+import type { QuestionResult, ScanEngine, ScanSummary } from "./types";
 
 export type ScanMode = "test" | "live";
 
@@ -31,6 +33,10 @@ export interface RunOptions {
   maxQuestions?: number;
   /** Questions traitées en parallèle. */
   concurrency?: number;
+  /** Passages par question et par moteur (3 par défaut). */
+  runs?: number;
+  /** Passages au maximum quand le résultat hésite (5 par défaut). */
+  maxRuns?: number;
   now?: () => Date;
   log?: (line: string) => void;
 }
@@ -45,6 +51,8 @@ export interface CompanyReport {
 /** Au-delà de 25 % de réponses en erreur, un relevé live n'est pas publié dans le Cockpit. */
 const MAX_ERROR_RATE = 0.25;
 const DEFAULT_MAX_QUESTIONS = 30;
+const DEFAULT_RUNS = 3;
+const DEFAULT_MAX_RUNS = 5;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -126,7 +134,12 @@ async function scanCompany(
   for (const r of [promptsRes, brandsRes, napRes, scoreRes, locationsRes]) if (r.error) throw new Error(r.error.message);
 
   const questions = (promptsRes.data ?? []) as { prompt_text: string; location_id: string | null }[];
-  const brands: BrandMatcher[] = (brandsRes.data ?? []).map((b) => ({ name: b.name, is_client: b.is_client, aliases: b.aliases ?? [] }));
+  const tracked = brandsRes.data ?? [];
+  const brands: BrandMatcher[] = tracked
+    .filter((b) => !b.ignored)
+    .map((b) => ({ name: b.name, is_client: b.is_client, aliases: b.aliases ?? [] }));
+  // Concurrents retirés à la main : jamais rajoutés automatiquement.
+  const ignoredKeys = new Set(tracked.filter((b) => b.ignored).flatMap((b) => [b.name, ...(b.aliases ?? [])].map(brandKey)));
   if (!brands.some((b) => b.is_client)) {
     log(`– ${company.name} : marque client non définie (onglet Concurrents de la vue admin).`);
     return { company: company.name, status: "skipped", detail: "marque client non définie" };
@@ -139,7 +152,9 @@ async function scanCompany(
   if (questions.length > max) log(`  ${company.name} : ${questions.length} questions, seules les ${max} premières sont posées.`);
   const asked = questions.slice(0, max);
 
-  log(`→ ${company.name} : ${asked.length} questions × ${ai.engines.join(" + ")}`);
+  const runs = Math.max(1, options.runs ?? DEFAULT_RUNS);
+  const maxRuns = Math.max(runs, options.maxRuns ?? DEFAULT_MAX_RUNS);
+  log(`→ ${company.name} : ${asked.length} questions × ${ai.engines.join(" + ")} × ${runs} passages (jusqu'à ${maxRuns} si le résultat hésite)`);
 
   // ------------------------------------------------------------ Questions × moteurs
   const usage: ScanSummary["usage"] = {};
@@ -150,31 +165,70 @@ async function scanCompany(
     entry.output += u?.output ?? 0;
   };
 
-  const results: QuestionResult[] = await pool(asked, options.concurrency ?? 4, async (q) => {
-    const engines: QuestionResult["engines"] = {};
-    await Promise.all(
-      ai.engines.map(async (engine: ScanEngine) => {
-        try {
-          const answer = await ai.ask(engine, q.prompt_text, { city: company.city });
-          addUsage(engine, answer.usage);
-          if (!answer.text) throw new Error("réponse vide");
-          let ranking: string[] = [];
-          try {
-            const extracted = await ai.extractBusinesses(q.prompt_text, answer.text);
-            if (extracted.usage) addUsage("analysis", extracted.usage);
-            ranking = extracted.names;
-          } catch (e) {
-            log(`  ! analyse « ${q.prompt_text.slice(0, 50)}… » (${engine}) : ${message(e)} → classement par ordre d'apparition`);
-          }
-          engines[engine] = analyzeAnswer(answer, brands, ranking);
-        } catch (e) {
-          log(`  ! ${engine} « ${q.prompt_text.slice(0, 50)}… » : ${message(e)}`);
-          engines[engine] = errorResult(message(e));
+  /** Un passage : la question posée une fois au moteur, puis la réponse analysée. */
+  const askOnce = async (question: string, engine: ScanEngine): Promise<RunDetail> => {
+    try {
+      const answer = await ai.ask(engine, question, { city: company.city });
+      addUsage(engine, answer.usage);
+      if (!answer.text) throw new Error("réponse vide");
+      let ranking: string[] = [];
+      try {
+        const extracted = await ai.extractBusinesses(question, answer.text);
+        if (extracted.usage) addUsage("analysis", extracted.usage);
+        ranking = extracted.names;
+      } catch (e) {
+        log(`  ! analyse « ${question.slice(0, 50)}… » (${engine}) : ${message(e)} → classement par ordre d'apparition`);
+      }
+      const r = analyzeAnswer(answer, brands, ranking);
+      return { status: r.status, position: r.position, mentions: r.mentions, ranking: r.ranking, answer: r.answer, snippet: r.snippet, sources: r.sources };
+    } catch (e) {
+      log(`  ! ${engine} « ${question.slice(0, 50)}… » : ${message(e)}`);
+      return { status: "error", position: null, mentions: [], ranking: [], answer: "", snippet: null, sources: [], error: message(e) };
+    }
+  };
+  const askMany = (question: string, engine: ScanEngine, n: number) => Promise.all(Array.from({ length: n }, () => askOnce(question, engine)));
+
+  // Passages : `runs` par question et par moteur, complétés jusqu'à `maxRuns` si le résultat hésite.
+  const details: { question: string; location_id: string | null; engines: Partial<Record<ScanEngine, RunDetail[]>> }[] =
+    await pool(asked, options.concurrency ?? 4, async (q) => {
+      const engines: Partial<Record<ScanEngine, RunDetail[]>> = {};
+      await Promise.all(
+        ai.engines.map(async (engine) => {
+          const first = await askMany(q.prompt_text, engine, runs);
+          const extra = isUncertain(first) && maxRuns > runs ? await askMany(q.prompt_text, engine, maxRuns - runs) : [];
+          engines[engine] = [...first, ...extra];
+        }),
+      );
+      return { question: q.prompt_text, location_id: q.location_id, engines };
+    });
+
+  const aggregate = (): QuestionResult[] =>
+    details.map((d) => ({
+      question: d.question,
+      location_id: d.location_id,
+      engines: Object.fromEntries(Object.entries(d.engines).map(([e, list]) => [e, aggregateRuns(list!)])),
+    }));
+
+  // ------------------------------------------------- Concurrents non suivis
+  const discovered = discoverBrands(aggregate(), brands, ignoredKeys);
+  const toAdd = brandsToAdd(discovered, tracked.filter((b) => !b.ignored).length);
+  for (const d of toAdd) {
+    d.added = true;
+    const brand: BrandMatcher = { name: d.name, is_client: false, aliases: d.variants };
+    brands.push(brand);
+    // La marque compte dès ce relevé : on la repère dans les réponses déjà obtenues.
+    for (const entry of details) {
+      for (const list of Object.values(entry.engines)) {
+        for (const run of list ?? []) {
+          if (run.status === "error") continue;
+          if (findMentions(run.answer, [brand]).size || run.ranking.some((n) => matchBrand(n, [brand]))) run.mentions.push(brand.name);
         }
-      }),
-    );
-    return { question: q.prompt_text, location_id: q.location_id, engines };
-  });
+      }
+    }
+  }
+  if (toAdd.length) log(`  + concurrents ajoutés : ${toAdd.map((d) => d.name).join(", ")}`);
+
+  const results = aggregate();
 
   // ------------------------------------------------------------------- Chiffres
   const locations = locationsRes.data ?? [];
@@ -187,8 +241,8 @@ async function scanCompany(
   const nap = napConformity(napRes.data ?? []);
   const metrics = computeMetrics(results, brands, { googleRating, napConformity: nap.score });
 
-  const totalAnswers = asked.length * ai.engines.length;
-  const errorRate = metrics.errors / totalAnswers;
+  const totalAnswers = metrics.answers + metrics.errors;
+  const errorRate = totalAnswers ? metrics.errors / totalAnswers : 1;
   const status: CompanyReport["status"] = metrics.errors === 0 ? "ok" : errorRate <= MAX_ERROR_RATE ? "partial" : "error";
   const publish = options.mode === "live" && status !== "error";
 
@@ -201,6 +255,8 @@ async function scanCompany(
     usage,
     duration_s: Math.round((now().getTime() - started.getTime()) / 1000),
     published: publish,
+    runs_per_question: runs,
+    discovered: discovered.slice(0, 15),
   };
 
   const client = brands.find((b) => b.is_client)!;
@@ -213,6 +269,21 @@ async function scanCompany(
 
   // ------------------------------------------------------------------ Écritures
   const runAt = now().toISOString();
+  if (toAdd.length) {
+    const maxOrder = tracked.reduce((m, b) => Math.max(m, b.sort_order ?? 0), 0);
+    const { error: brandError } = await db.from("tracked_brands").upsert(
+      toAdd.map((d, i) => ({
+        company_id: company.id,
+        name: d.name,
+        aliases: d.variants,
+        is_client: false,
+        auto_added: true,
+        sort_order: maxOrder + 1 + i,
+      })),
+      { onConflict: "company_id,name", ignoreDuplicates: true },
+    );
+    if (brandError) log(`  ! ajout des concurrents : ${brandError.message}`);
+  }
   if (publish) {
     await publishToCockpit(db, company, client.name, results, summary, previous, runAt, ai.engines);
   }
@@ -231,13 +302,9 @@ async function scanCompany(
   return { company: company.name, status, summary };
 }
 
-function errorResult(error: string): EngineResult {
-  return { status: "error", position: null, mentions: [], ranking: [], snippet: null, answer: "", sources: [], error };
-}
-
 const ENGINE_NAMES: Record<ScanEngine, string> = { chatgpt: "ChatGPT", gemini: "Gemini" };
 
-const dbStatus = (r?: EngineResult) => (!r || r.status === "error" ? "pending" : r.status);
+const dbStatus = (r?: QuestionResult["engines"][ScanEngine]) => (!r || r.status === "error" ? "pending" : r.status);
 
 async function publishToCockpit(
   db: SupabaseClient,
@@ -266,6 +333,13 @@ async function publishToCockpit(
         ai_snippet: mainSnippet(r),
         ai_snippets: Object.fromEntries(
           engines.map((e) => [e, r.engines[e]?.snippet]).filter(([, s]) => typeof s === "string"),
+        ),
+        // Passages où le client est cité / passages exploitables, par moteur : { "chatgpt": [2, 3] }.
+        mention_runs: Object.fromEntries(
+          engines.flatMap((e) => {
+            const c = citedRuns(r.engines[e]);
+            return c && c.total ? [[e, [c.cited, c.total]]] : [];
+          }),
         ),
         scanned_at: runAt,
       })),

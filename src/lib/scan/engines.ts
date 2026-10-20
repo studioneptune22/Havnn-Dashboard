@@ -21,7 +21,10 @@ export const DEFAULT_MODELS = {
 };
 
 export interface AskContext {
-  /** Ville du client : localisation approximative de la recherche web ChatGPT. */
+  /**
+   * Ville du client. Volontairement non transmise comme localisation de la recherche web :
+   * l'internaute n'est pas dans l'atelier du client, et la question précise déjà le lieu.
+   */
   city: string | null;
 }
 
@@ -160,7 +163,9 @@ export function createAiClient(config: AiConfig): AiClient {
             tools: [
               {
                 type: "web_search",
-                user_location: { type: "approximate", country: "FR", ...(ctx.city ? { city: ctx.city } : {}) },
+                // Recherche localisée en France seulement : placer l'internaute dans la ville du
+                // client avantagerait ce dernier par rapport à un vrai prospect.
+                user_location: { type: "approximate", country: "FR" },
               },
             ],
             store: false,
