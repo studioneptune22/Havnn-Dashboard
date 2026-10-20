@@ -1,9 +1,10 @@
 name: Relevé ChatGPT et Gemini
 
-# Chaque lundi à 5 h UTC (6 h ou 7 h à Paris), et à la demande depuis l'onglet Actions.
+# Le 27 de chaque mois à 5 h UTC (6 h ou 7 h à Paris), dernière semaine du mois, et à la demande
+# depuis l'onglet Actions. Un relevé par mois suffit à mesurer les actions menées dans le mois.
 on:
   schedule:
-    - cron: "0 5 * * 1"
+    - cron: "0 5 27 * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -39,7 +40,7 @@ jobs:
       - run: npm ci
 
       - name: Relevé
-        # Le relevé planifié suit la variable SCAN_MODE (test tant qu'elle n'est pas passée à live).
+        # Le relevé planifié (mensuel) suit la variable SCAN_MODE (test tant qu'elle n'est pas passée à live).
         run: npx tsx scripts/scan.ts --mode="${MODE}" ${COMPANY:+--company="$COMPANY"}
         env:
           MODE: ${{ inputs.mode || vars.SCAN_MODE || 'test' }}

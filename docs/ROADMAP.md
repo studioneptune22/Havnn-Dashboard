@@ -43,12 +43,12 @@ IA au NAP, aux avis et aux actions menées (journal).
 ### Phase 1 — Fondations (oct. – déc. 2026, ≈ 5 séances)
 1. **Avis Google automatiques** (code en ligne, config de Jérôme) : migration 003, clé Places API (New) + alerte
    budget 5 €, `GOOGLE_PLACES_API_KEY` et `CRON_SECRET` dans Vercel, Place ID des 11 fiches, test via « Run ».
-2. **Relevé automatique hebdomadaire ChatGPT + Gemini** (2 séances) : positions, score, part de voix,
+2. **Relevé automatique mensuel ChatGPT + Gemini** (le 27, dernière semaine du mois) (2 séances) : positions, score, part de voix,
    **aperçu de la citation** (extrait de réponse par question). **Code en ligne (9 oct.)**, testé sur réponses
    simulées ; reste la config de Jérôme (comptes, clés en secrets GitHub, variantes de noms) et le calibrage.
    - Comptes OpenAI et Google AI Studio + limites de dépense.
    - Concurrents et variantes de noms par client (ex. « Ax'home » / « Axhome », règle Autovision hors groupe).
-   - Robot (GitHub Actions, chaque lundi) : ChatGPT (gpt-6.1-sol + recherche web, secours gpt-5.6-terra), Gemini (3.8 Flash +
+   - Robot (GitHub Actions, le 27 de chaque mois, 5 passages par question) : ChatGPT (gpt-6.1-sol + recherche web, secours gpt-5.6-terra), Gemini (3.8 Flash +
      recherche Google), analyse des réponses (Flash Lite).
    - Calibrage 1 à 2 semaines en parallèle d'un relevé manuel.
 3. ✅ **Vue admin** : passer d'un client à l'autre, créer un client et son accès portail, questions et concurrents
@@ -61,7 +61,7 @@ IA au NAP, aux avis et aux actions menées (journal).
 Contrôle : relevé automatique = relevé manuel sur les clients existants.
 
 ### Phase 2 — Mesure fiable (janv. – févr. 2027, ≈ 6,5 séances)
-1. ✅ **Plusieurs passages par question** (3 par moteur, 5 si le résultat hésite), taux de mention « cité 2/3 »,
+1. ✅ **Plusieurs passages par question** (5 par moteur et par mois ; 3 + 2 si le résultat hésite en option), taux de mention « cité 3/5 »,
    badges solide / fragile / absent. Reste : tendance en points au-delà du bruit (seuil fixé après calibrage).
 2. **Sources lues par les IA** enregistrées à chaque passage, **mention ou citation** (site du client dans les sources) (1,5 séance).
 3. ✅ **Détection automatique des concurrents non listés** : ajoutés s'ils sont cités dans au moins 2 questions et

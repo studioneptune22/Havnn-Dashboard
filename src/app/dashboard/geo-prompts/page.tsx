@@ -34,7 +34,7 @@ export default async function GeoPromptsPage() {
       <PageHeader
         eyebrow="Benchmark IA"
         title="Prompts métiers"
-        description={`Les questions que vos clients posent aux IA génératives. Chaque semaine, HAVNN vérifie si ${company.name} est citée par ${ACTIVE_ENGINES_LABEL}. Cliquez sur une ligne pour lire l'extrait de réponse.`}
+        description={`Les questions que vos clients posent aux IA génératives. Chaque mois, HAVNN vérifie si ${company.name} est citée par ${ACTIVE_ENGINES_LABEL}. Cliquez sur une ligne pour lire l'extrait de réponse.`}
       />
 
       <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
