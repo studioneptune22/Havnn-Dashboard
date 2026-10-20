@@ -43,7 +43,12 @@ Ordre de réalisation (≈ 6 séances), chaque brique servant aussi aux clients 
   → 2. test lite + onglet Leads → 3. rapport mensuel (premier vrai rapport : 28 novembre).
 - ✅ **Cockpit sur https://cockpit.havnn.fr** (CNAME o2switch → Vercel, Site URL et Redirect URL Supabase à
   jour). havnn.fr est un WordPress hébergé chez o2switch (cPanel).
-- Prochaine étape : envoi d'e-mails depuis havnn.fr (Resend, région UE).
+- ✅ **Resend** : domaine havnn.fr vérifié (région Irlande ; lignes DKIM `resend._domainkey`, CNAME `send` et
+  `rsend` chez o2switch ; réception désactivée, la boîte mail reste chez o2switch).
+- **En pause (reprise ici)** : vérifier la clé `RESEND_API_KEY` (envoi seul) dans Vercel ; clé `supabase-auth` +
+  SMTP personnalisé dans Supabase (smtp.resend.com:465, utilisateur `resend`, expéditeur `HAVNN <cockpit@havnn.fr>`)
+  puis test « mot de passe oublié » ; ligne DMARC `_dmarc` TXT `v=DMARC1; p=none;` si absente. Ensuite : construction
+  du test lite sur cockpit.havnn.fr.
 
 ## 📨 Rapport mensuel « Votre rapport mensuel GEO »
 
