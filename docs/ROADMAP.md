@@ -1,6 +1,6 @@
 # HAVNN — Feuille de route
 
-_Dernière mise à jour : 14 octobre 2026_
+_Dernière mise à jour : 20 octobre 2026_
 
 ## 🎯 Priorité : acquisition par le test IA en libre-service (octobre 2026)
 
@@ -26,6 +26,37 @@ Ordre de réalisation (≈ 6 séances), chaque brique servant aussi aux clients 
    vue admin (tests réalisés, e-mails laissés, audits réservés, clients signés, par support).
 5. **Démo de l'audit flash** (1/2 séance) : depuis la vue admin, générer en un clic le cockpit lite d'un prospect
    avant l'appel de 15 min, pour lui montrer son propre tableau de bord.
+
+### Décisions du 20 octobre 2026
+
+- **Impression des flyers : fin de semaine / début de semaine prochaine.** Le QR code pointe vers une adresse
+  sur havnn.fr (proposée : `havnn.fr/test-ia?s=flyer`, `?s=carte`…), redirigeable à volonté, et non vers un lien
+  Bitly gratuit (destination non modifiable). Page d'attente tant que le test n'est pas en ligne : le test doit
+  être prêt pour la **distribution**, pas pour l'impression. Adresse définitive encore à arrêter.
+- **Un seul test par entreprise** : juste ce qu'il faut pour donner envie de réserver l'audit flash gratuit
+  (https://cal.com/jerome-geo/15min). Pas de relevé mensuel pour les comptes lite.
+- **Ordre** : 0. QR code et page d'attente → 1. envoi d'e-mails depuis havnn.fr (Resend + DNS, brique commune)
+  → 2. test lite + onglet Leads → 3. rapport mensuel (premier vrai rapport : 28 novembre).
+- **À fournir par Jérôme** : l'outil de havnn.fr (WordPress, Webflow…), l'adresse actuelle du cockpit, le feu
+  vert pour l'étape 1.
+
+## 📨 Rapport mensuel « Votre rapport mensuel GEO »
+
+- **Le 27 tôt le matin** : relevé publié, puis le robot prépare un rapport brouillon par client : score et
+  évolution, questions où il est cité (gagnées, perdues), part de voix des concurrents, journal du mois, et un
+  **brouillon de préconisations** pour le mois suivant (questions absentes ou fragiles, concurrents qui montent).
+- **Le 27 dans la journée** : Jérôme reçoit « N rapports à valider », relit, corrige et enrichit les
+  préconisations dans la vue admin.
+- **Envoi uniquement après validation de Jérôme** (jamais automatique) : le 28 en semaine, sinon le jour de la
+  validation (ex. le lundi si le 28 tombe un week-end).
+- Forme : e-mail court (score, 3 chiffres clés, priorités) + bouton vers une page Rapport du cockpit,
+  enregistrable en PDF, qui garde l'historique des rapports.
+
+## 📰 Cockpit : derniers articles du blog HAVNN
+
+À reprendre avec Jérôme : afficher dans le cockpit les derniers articles de https://www.havnn.fr/blog/ (projet
+« Blog Havnn »). Piste : lecture du flux RSS du blog si l'outil du site en fournit un, mise en cache côté serveur,
+bloc « Les derniers articles HAVNN » sur la vue d'ensemble.
 
 ## 🌐 Site havnn.fr : home V2
 
