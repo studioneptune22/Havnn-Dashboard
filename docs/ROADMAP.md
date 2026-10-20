@@ -1,6 +1,37 @@
 # HAVNN — Feuille de route
 
-_Dernière mise à jour : 9 octobre 2026_
+_Dernière mise à jour : 14 octobre 2026_
+
+## 🎯 Priorité : acquisition par le test IA en libre-service (octobre 2026)
+
+Objectif de Jérôme : 10 000 flyers « Votre entreprise est-elle citée par les IA ? » avec QR code, posés dans des
+lieux stratégiques, et la carte de visite avec le même QR code. Chaque support a son lien Bitly pour suivre
+l'acquisition. **La page du test doit être en ligne avant l'impression des flyers.**
+
+Ordre de réalisation (≈ 6 séances), chaque brique servant aussi aux clients existants :
+
+0. **Prérequis (week-end)** : clés OpenAI, Google AI Studio et Google Places, premier relevé de test du robot.
+1. **Audit automatique du site** (1 séance, avancé depuis la phase 4) : Schema.org (comme validator.schema.org),
+   llms.txt, llms-full.txt, robots.txt. Remplit aussi le pilier Structure & Factualité des clients.
+2. **Cockpit « lite » créé automatiquement** (1,5 séance) : à partir du nom, de la ville, de l'activité et du site,
+   génération de 5 à 10 questions, détection automatique des concurrents cités, relevé ChatGPT + Gemini, note et
+   avis Google (Places API), audit du site. Le compte lite montre le score, quelques questions et les concurrents ;
+   le reste est verrouillé (« débloquer avec un audit / un suivi »).
+3. **Page publique « Testez votre visibilité IA »** (2 séances, voir le détail plus bas) : formulaire, résultat
+   partiel immédiat, résultat complet contre l'e-mail (consentement RGPD), création du compte lite, réservation de
+   l'audit flash 15 min (Cal.com), notification à Jérôme, anti-abus (captcha, limites par IP et e-mail, plafond
+   quotidien de dépense).
+4. **Suivi de l'acquisition** (1/2 séance) : un lien Bitly par support (flyers par lieu, carte de visite…) qui
+   pointe vers la page avec un paramètre de source ; la source est enregistrée avec chaque lead et visible dans la
+   vue admin (tests réalisés, e-mails laissés, audits réservés, clients signés, par support).
+5. **Démo de l'audit flash** (1/2 séance) : depuis la vue admin, générer en un clic le cockpit lite d'un prospect
+   avant l'appel de 15 min, pour lui montrer son propre tableau de bord.
+
+## 🌐 Site havnn.fr : home V2
+
+4 cartes, une par pilier d'activité, pour orienter chaque visiteur vers ce qu'il cherche :
+**G.E.O** · **Vidéo (Fast Content et vidéos IA)** · **Websites** · **Advisory**. La carte G.E.O mène au test IA en
+libre-service. Proposition de Jérôme à venir ; à préciser : l'outil avec lequel havnn.fr est fait.
 
 ## 🗺️ Plan de déploiement du Cockpit (octobre 2026 → été 2027)
 
@@ -17,7 +48,7 @@ IA au NAP, aux avis et aux actions menées (journal).
    simulées ; reste la config de Jérôme (comptes, clés en secrets GitHub, variantes de noms) et le calibrage.
    - Comptes OpenAI et Google AI Studio + limites de dépense.
    - Concurrents et variantes de noms par client (ex. « Ax'home » / « Axhome », règle Autovision hors groupe).
-   - Robot (GitHub Actions, chaque lundi) : ChatGPT (GPT-5.6 Terra + recherche web), Gemini (3.8 Flash +
+   - Robot (GitHub Actions, chaque lundi) : ChatGPT (gpt-6.1-sol + recherche web, secours gpt-5.6-terra), Gemini (3.8 Flash +
      recherche Google), analyse des réponses (Flash Lite).
    - Calibrage 1 à 2 semaines en parallèle d'un relevé manuel.
 3. ✅ **Vue admin** : passer d'un client à l'autre, créer un client et son accès portail, questions et concurrents
@@ -61,7 +92,7 @@ Contrôle : les clients utilisent le cockpit (connexions, messages, questions pr
 **Écartés** : métriques SEO des sources et prix d'achat d'articles (Onze), volumes de recherche des prompts
 (Profound), analyse des robots IA sur le site, marque blanche.
 
-## 🚀 Détail — Page « Testez votre visibilité IA » (phase 2)
+## 🚀 Détail — Page « Testez votre visibilité IA » (avancée en priorité, voir plus haut)
 
 Page d'atterrissage publique pour les prospects (inspiration : https://www.geobuster.ai/) :
 - formulaire (entreprise, ville, activité, site, email) ;

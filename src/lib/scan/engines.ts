@@ -15,9 +15,9 @@ export interface AiConfig {
 
 /** Modèles par défaut (modifiables via les variables OPENAI_MODEL, GEMINI_MODEL, GEMINI_ANALYSIS_MODEL). */
 export const DEFAULT_MODELS = {
-  openai: "gpt-5.6-terra",
+  openai: "gpt-6.1-sol",
   gemini: "gemini-3.8-flash",
-  analysis: "gemini-3.8-flash-lite",
+  analysis: "gemini-3.5-flash-lite",
 };
 
 export interface AskContext {
