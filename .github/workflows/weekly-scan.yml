@@ -15,6 +15,10 @@ on:
         description: "Site du client (ex. dgco-fermetures.com), plusieurs séparés par des virgules. Vide = clients avec « Relevé automatique » activé."
         required: false
 
+# Le robot lit le dépôt seulement : il écrit dans Supabase, jamais dans GitHub.
+permissions:
+  contents: read
+
 concurrency:
   group: weekly-scan
   cancel-in-progress: false
