@@ -29,10 +29,12 @@ Ordre de réalisation (≈ 6 séances), chaque brique servant aussi aux clients 
 
 ### Décisions du 20 octobre 2026
 
-- **Impression des flyers : fin de semaine / début de semaine prochaine.** Le QR code pointe vers une adresse
-  sur havnn.fr (proposée : `havnn.fr/test-ia?s=flyer`, `?s=carte`…), redirigeable à volonté, et non vers un lien
-  Bitly gratuit (destination non modifiable). Page d'attente tant que le test n'est pas en ligne : le test doit
-  être prêt pour la **distribution**, pas pour l'impression. Adresse définitive encore à arrêter.
+- **Impression des flyers : fin de semaine / début de semaine prochaine.** Un lien Bitly par support (suivi des
+  origines, demandé par Jérôme) ; chaque lien Bitly pointe vers une adresse sur havnn.fr avec la source
+  (proposée : `havnn.fr/test-ia?s=flyer`, `?s=carte`…). Le QR code encode le lien Bitly. Comme la destination est
+  une adresse de havnn.fr, elle reste redirigeable même si Bitly ne permet pas de modifier le lien ; la source est
+  aussi enregistrée avec chaque lead. Page d'attente tant que le test n'est pas en ligne : le test doit être prêt
+  pour la **distribution**, pas pour l'impression. Adresse définitive encore à arrêter.
 - **Un seul test par entreprise** : juste ce qu'il faut pour donner envie de réserver l'audit flash gratuit
   (https://cal.com/jerome-geo/15min). Pas de relevé mensuel pour les comptes lite.
 - **Ordre** : 0. QR code et page d'attente → 1. envoi d'e-mails depuis havnn.fr (Resend + DNS, brique commune)
