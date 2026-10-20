@@ -85,7 +85,7 @@ Migration requise : `supabase/migrations/004_admin_scan.sql`.
 
 `.github/workflows/weekly-scan.yml`, chaque lundi à 5 h UTC et à la demande (onglet Actions › « Relevé ChatGPT et
 Gemini » › Run workflow). Pour chaque client dont « Relevé automatique » est activé, `scripts/scan.ts` pose les
-questions suivies à ChatGPT (API Responses + recherche web, localisée sur la ville du client) et à Gemini (recherche
+questions suivies à ChatGPT (API Responses + recherche web, localisée en France sans ville précise, pour ne pas avantager le client) et à Gemini (recherche
 Google), puis un modèle Gemini léger liste les entreprises recommandées dans chaque réponse pour en déduire la
 position du client. Les marques suivies sont repérées par leurs variantes (sans tenir compte des majuscules,
 accents et séparateurs).
