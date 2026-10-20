@@ -29,7 +29,7 @@ export interface Company {
   plan_status: "onboarding" | "active" | "paused";
   /** Fiche Google Maps (Place ID) : note et avis relevés chaque jour. */
   google_place_id?: string | null;
-  /** Inclus dans le relevé automatique hebdomadaire ChatGPT / Gemini. */
+  /** Inclus dans le relevé automatique mensuel ChatGPT / Gemini. */
   auto_scan?: boolean;
   created_at: string;
 }

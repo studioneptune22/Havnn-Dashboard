@@ -168,7 +168,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { ongl
             <CardHeader>
               <CardTitle>Questions suivies · {company.name}</CardTitle>
               <CardDescription>
-                Les questions posées chaque semaine à ChatGPT et Gemini. Les résultats existants sont conservés pour les questions
+                Les questions posées chaque mois à ChatGPT et Gemini. Les résultats existants sont conservés pour les questions
                 inchangées.
               </CardDescription>
             </CardHeader>
@@ -227,7 +227,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { ongl
             <CardHeader>
               <CardTitle>Relevé automatique · {company.name}</CardTitle>
               <CardDescription>
-                Chaque lundi matin, le robot pose les {data.prompts.length} questions suivies à ChatGPT et Gemini. En mode test,
+                Le 27 de chaque mois, le robot pose les {data.prompts.length} questions suivies à ChatGPT et Gemini. En mode test,
                 les résultats s&apos;affichent ici seulement, pour les comparer au relevé manuel ; en mode publié, ils mettent à jour
                 le Cockpit du client.
               </CardDescription>

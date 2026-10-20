@@ -83,15 +83,14 @@ Migrations requises : `supabase/migrations/004_admin_scan.sql` et `005_scan_runs
 
 ## Relevé automatique ChatGPT / Gemini (GitHub Actions)
 
-`.github/workflows/weekly-scan.yml`, chaque lundi à 5 h UTC et à la demande (onglet Actions › « Relevé ChatGPT et
+`.github/workflows/weekly-scan.yml`, le 27 de chaque mois à 5 h UTC (dernière semaine du mois) et à la demande (onglet Actions › « Relevé ChatGPT et
 Gemini » › Run workflow). Pour chaque client dont « Relevé automatique » est activé, `scripts/scan.ts` pose les
 questions suivies à ChatGPT (API Responses + recherche web, localisée en France sans ville précise, pour ne pas avantager le client) et à Gemini (recherche
 Google), puis un modèle Gemini léger liste les entreprises recommandées dans chaque réponse pour en déduire la
 position du client. Les marques suivies sont repérées par leurs variantes (sans tenir compte des majuscules,
 accents et séparateurs).
 
-- **Passages multiples** : chaque question est posée 3 fois par moteur, 5 si le résultat hésite (cité certains
-  passages seulement). Le score se calcule sur tous les passages ; chaque question affiche « cité 2/3 »
+- **Passages multiples** : chaque question est posée 5 fois par moteur (relevé mensuel). Le score se calcule sur tous les passages ; chaque question affiche « cité 3/5 »
   (`prompts_monitoring.mention_runs`). Variable `SCAN_RUNS` (1 à 5) pour changer le nombre de passages.
 - **Concurrents détectés** : les entreprises recommandées par les IA mais non suivies sont listées dans le relevé ;
   celles citées dans au moins 2 questions et 3 réponses sont ajoutées aux concurrents (`tracked_brands.auto_added`).
@@ -101,7 +100,7 @@ accents et séparateurs).
   Au-delà de 25 % de réponses en erreur, rien n'est publié.
 
 Secrets du dépôt : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`.
-Variables (optionnelles) : `SCAN_MODE` (`test` ou `live` pour le relevé du lundi), `OPENAI_MODEL`, `GEMINI_MODEL`,
+Variables (optionnelles) : `SCAN_MODE` (`test` ou `live` pour le relevé mensuel), `OPENAI_MODEL`, `GEMINI_MODEL`,
 `GEMINI_ANALYSIS_MODEL`. Essai local : `npm run scan -- --mode=test --company=exemple.fr --no-save`.
 Tests : `npm test` (réponses simulées).
 

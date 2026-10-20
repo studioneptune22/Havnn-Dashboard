@@ -5,7 +5,7 @@
  *   mode "test" : résultat enregistré dans scan_runs uniquement (calibrage, Cockpit inchangé)
  *   mode "live" : publié dans le Cockpit (questions, part de voix, score, journal) + scan_runs
  *
- * Lancé chaque lundi par GitHub Actions (scripts/scan.ts). Aucune dépendance à Next.js.
+ * Lancé le 27 de chaque mois par GitHub Actions (scripts/scan.ts). Aucune dépendance à Next.js.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -33,7 +33,7 @@ export interface RunOptions {
   maxQuestions?: number;
   /** Questions traitées en parallèle. */
   concurrency?: number;
-  /** Passages par question et par moteur (3 par défaut). */
+  /** Passages par question et par moteur (5 par défaut : relevé mensuel). */
   runs?: number;
   /** Passages au maximum quand le résultat hésite (5 par défaut). */
   maxRuns?: number;
@@ -51,7 +51,7 @@ export interface CompanyReport {
 /** Au-delà de 25 % de réponses en erreur, un relevé live n'est pas publié dans le Cockpit. */
 const MAX_ERROR_RATE = 0.25;
 const DEFAULT_MAX_QUESTIONS = 30;
-const DEFAULT_RUNS = 3;
+const DEFAULT_RUNS = 5;
 const DEFAULT_MAX_RUNS = 5;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -386,7 +386,7 @@ async function publishToCockpit(
     await db.from("activity_logs").insert({
       company_id: company.id,
       category: "monitoring",
-      title: `Relevé hebdomadaire ${engines.map((e) => ENGINE_NAMES[e]).join(" et ")}`,
+      title: `Relevé mensuel ${engines.map((e) => ENGINE_NAMES[e]).join(" et ")}`,
       description:
         `${summary.questions} questions posées : ${clientName} est cité dans ${summary.cited} réponses sur ${summary.answers}` +
         `${summary.first_place ? `, dont ${summary.first_place} en 1re position` : ""}. Score de dominance ${summary.score} %${trend}.`,

@@ -283,7 +283,7 @@ export async function setAutoScan(_prev: ActionState, formData: FormData): Promi
     const enabled = formData.get("enabled") === "true";
     const { error } = await db.from("companies").update({ auto_scan: enabled }).eq("id", companyId);
     if (error) throw new Error(error.message);
-    return enabled ? "Client inclus dans le relevé automatique du lundi." : "Client retiré du relevé automatique.";
+    return enabled ? "Client inclus dans le relevé automatique mensuel (le 27 de chaque mois)." : "Client retiré du relevé automatique.";
   });
 }
 
