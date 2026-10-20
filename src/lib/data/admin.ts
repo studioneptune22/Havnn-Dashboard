@@ -54,7 +54,10 @@ export async function getClientsOverview(): Promise<ClientOverview[]> {
 
 export interface AdminClientData {
   activity: ActivityLog[];
-  prompts: Pick<PromptMonitoring, "prompt_text" | "location_id" | "chatgpt_status" | "gemini_status" | "chatgpt_position" | "gemini_position" | "scanned_at">[];
+  prompts: Pick<
+    PromptMonitoring,
+    "prompt_text" | "location_id" | "chatgpt_status" | "gemini_status" | "chatgpt_position" | "gemini_position" | "scanned_at" | "mention_runs"
+  >[];
   brands: TrackedBrand[];
   locations: Location[];
   /** Comptes de connexion rattachés au client. */
@@ -78,7 +81,7 @@ export async function getAdminClientData(companyId: string): Promise<AdminClient
       .returns<ActivityLog[]>(),
     supabase
       .from("prompts_latest")
-      .select("prompt_text, location_id, chatgpt_status, gemini_status, chatgpt_position, gemini_position, scanned_at")
+      .select("*")
       .eq("company_id", companyId)
       .order("prompt_text")
       .returns<AdminClientData["prompts"]>(),

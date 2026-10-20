@@ -7,7 +7,8 @@
  */
 
 import type { BrandMatcher } from "./analyze";
-import { SCAN_ENGINES, type BrandShare, type QuestionResult, type ScanEngine } from "./types";
+import { runsOf } from "./runs";
+import { SCAN_ENGINES, type BrandShare, type QuestionResult, type ScanEngine, type Stability } from "./types";
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const pct = (part: number, total: number) => (total ? (part / total) * 100 : 0);
@@ -24,36 +25,65 @@ export function dominanceScore(citedRate: number, top3Rate: number, { googleRati
   return Math.round(Math.min(100, Math.max(0, score)));
 }
 
+/**
+ * Chiffres calculés sur l'ensemble des passages : chaque passage compte comme une réponse.
+ * Part de voix : nombre de questions où la marque apparaît, pondéré par sa fréquence
+ * dans les passages (cité 2 fois sur 3 = 2/3 de question), arrondi.
+ */
 export function computeMetrics(results: QuestionResult[], brands: BrandMatcher[], inputs: ScoreInputs) {
-  const answered = (e: ScanEngine) => results.map((r) => r.engines[e]).filter((x) => x && x.status !== "error");
-
   let answers = 0;
   let cited = 0;
   let top3 = 0;
   let firstPlace = 0;
   let errors = 0;
   const engineRate: Record<ScanEngine, number | null> = { chatgpt: null, gemini: null };
+  const stability: Stability = { solid: 0, fragile: 0, absent: 0 };
 
   for (const engine of SCAN_ENGINES) {
-    const ok = answered(engine);
-    errors += results.filter((r) => r.engines[engine]?.status === "error").length;
     if (results.every((r) => !r.engines[engine])) continue; // moteur non interrogé
-    const engineCited = ok.filter((x) => x!.status === "cited");
-    answers += ok.length;
-    cited += engineCited.length;
-    top3 += engineCited.filter((x) => x!.position !== null && x!.position <= 3).length;
-    firstPlace += engineCited.filter((x) => x!.position === 1).length;
-    engineRate[engine] = ok.length ? round1(pct(engineCited.length, ok.length)) : null;
+    let engineOk = 0;
+    let engineCited = 0;
+    for (const r of results) {
+      const result = r.engines[engine];
+      if (!result) continue;
+      const runs = runsOf(result);
+      const ok = runs.filter((x) => x.status !== "error");
+      const okCited = ok.filter((x) => x.status === "cited");
+      errors += runs.length - ok.length;
+      engineOk += ok.length;
+      engineCited += okCited.length;
+      top3 += okCited.filter((x) => x.position !== null && x.position <= 3).length;
+      firstPlace += okCited.filter((x) => x.position === 1).length;
+      if (ok.length) {
+        if (okCited.length === ok.length) stability.solid++;
+        else if (okCited.length > 0) stability.fragile++;
+        else stability.absent++;
+      }
+    }
+    answers += engineOk;
+    cited += engineCited;
+    engineRate[engine] = engineOk ? round1(pct(engineCited, engineOk)) : null;
   }
 
   const citedRate = pct(cited, answers);
   const top3Rate = pct(top3, answers);
 
+  /** Somme, sur les questions, de la part des passages qui citent la marque. */
+  const presence = (engine: ScanEngine, brand: string) =>
+    Math.round(
+      results.reduce((sum, r) => {
+        const result = r.engines[engine];
+        if (!result) return sum;
+        const ok = runsOf(result).filter((x) => x.status !== "error");
+        return ok.length ? sum + ok.filter((x) => x.mentions.includes(brand)).length / ok.length : sum;
+      }, 0),
+    );
+
   const shareOfVoice: BrandShare[] = brands.map((b) => ({
     name: b.name,
     is_client: b.is_client,
-    chatgpt: results.filter((r) => r.engines.chatgpt?.mentions.includes(b.name)).length,
-    gemini: results.filter((r) => r.engines.gemini?.mentions.includes(b.name)).length,
+    chatgpt: presence("chatgpt", b.name),
+    gemini: presence("gemini", b.name),
   }));
 
   return {
@@ -68,6 +98,7 @@ export function computeMetrics(results: QuestionResult[], brands: BrandMatcher[]
     first_place: firstPlace,
     errors,
     share_of_voice: shareOfVoice,
+    stability,
   };
 }
 

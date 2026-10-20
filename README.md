@@ -79,7 +79,7 @@ tout le portail bascule sur ce client. La page `/dashboard/admin` permet, sans S
 - d'inclure le client dans le **relevé automatique** et de consulter ses relevés question par question.
 
 Les écritures passent par des server actions qui vérifient le rôle, puis utilisent la clé `service_role`.
-Migration requise : `supabase/migrations/004_admin_scan.sql`.
+Migrations requises : `supabase/migrations/004_admin_scan.sql` et `005_scan_runs_discovery.sql`.
 
 ## Relevé automatique ChatGPT / Gemini (GitHub Actions)
 
@@ -90,6 +90,12 @@ Google), puis un modèle Gemini léger liste les entreprises recommandées dans 
 position du client. Les marques suivies sont repérées par leurs variantes (sans tenir compte des majuscules,
 accents et séparateurs).
 
+- **Passages multiples** : chaque question est posée 3 fois par moteur, 5 si le résultat hésite (cité certains
+  passages seulement). Le score se calcule sur tous les passages ; chaque question affiche « cité 2/3 »
+  (`prompts_monitoring.mention_runs`). Variable `SCAN_RUNS` (1 à 5) pour changer le nombre de passages.
+- **Concurrents détectés** : les entreprises recommandées par les IA mais non suivies sont listées dans le relevé ;
+  celles citées dans au moins 2 questions et 3 réponses sont ajoutées aux concurrents (`tracked_brands.auto_added`).
+  Un concurrent retiré à la main reste écarté (`ignored`) et n'est jamais rajouté.
 - **Mode `test`** (par défaut) : résultat enregistré dans `scan_runs` uniquement, comparé au Cockpit dans la vue admin.
 - **Mode `live`** : publie questions, part de voix, score (même formule que le relevé manuel) et une entrée de journal.
   Au-delà de 25 % de réponses en erreur, rien n'est publié.

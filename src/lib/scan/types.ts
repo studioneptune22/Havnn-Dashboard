@@ -15,7 +15,20 @@ export interface EngineAnswer {
   usage?: { input: number; output: number };
 }
 
-/** Résultat analysé d'une réponse. */
+/** Un passage : une réponse d'un moteur à une question, analysée. */
+export interface RunResult {
+  status: "cited" | "not_cited" | "error";
+  position: number | null;
+  mentions: string[];
+  ranking: string[];
+  error?: string;
+}
+
+/**
+ * Résultat d'une question sur un moteur. Avec plusieurs passages, `status` et `position`
+ * résument les passages (majorité, position médiane) et `runs` garde le détail ;
+ * l'extrait, la réponse et les sources sont ceux d'un passage représentatif.
+ */
 export interface EngineResult {
   status: "cited" | "not_cited" | "error";
   /** Rang du client parmi les entreprises citées (1 = première), null si absent. */
@@ -29,6 +42,8 @@ export interface EngineResult {
   answer: string;
   sources: Source[];
   error?: string;
+  /** Détail des passages (absent dans les relevés à un seul passage antérieurs). */
+  runs?: RunResult[];
 }
 
 export interface QuestionResult {
@@ -42,6 +57,28 @@ export interface BrandShare {
   is_client: boolean;
   chatgpt: number;
   gemini: number;
+}
+
+/** Entreprise citée par les IA mais absente des marques suivies. */
+export interface DiscoveredBrand {
+  name: string;
+  /** Autres écritures rencontrées. */
+  variants: string[];
+  /** Nombre de réponses (passages) qui la citent. */
+  answers: number;
+  /** Nombre de questions distinctes où elle apparaît. */
+  questions: number;
+  chatgpt: number;
+  gemini: number;
+  /** Ajoutée automatiquement aux concurrents suivis lors de ce relevé. */
+  added: boolean;
+}
+
+/** Stabilité des résultats (question × moteur) : toujours, parfois ou jamais cité. */
+export interface Stability {
+  solid: number;
+  fragile: number;
+  absent: number;
 }
 
 export interface ScanSummary {
@@ -65,4 +102,8 @@ export interface ScanSummary {
   duration_s: number;
   /** Relevé publié dans le Cockpit (mode live et assez de réponses valides). */
   published: boolean;
+  /** Passages prévus par question et par moteur (3 par défaut, jusqu'à 5 si le résultat hésite). */
+  runs_per_question?: number;
+  stability?: Stability;
+  discovered?: DiscoveredBrand[];
 }

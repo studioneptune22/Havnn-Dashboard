@@ -4,6 +4,7 @@ import { Snippet } from "@/components/prompts/snippet";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { AdminClientData } from "@/lib/data/admin";
+import { citedRuns } from "@/lib/scan/runs";
 import { SCAN_ENGINES, type EngineResult, type ScanEngine, type ScanSummary } from "@/lib/scan/types";
 import { cn, formatDateTime } from "@/lib/utils";
 import type { AiCitationStatus, ScanRun } from "@/types/database";
@@ -25,11 +26,39 @@ function hostOf(url: string) {
 
 const hasSummary = (s: ScanRun["summary"]): s is ScanSummary => "score" in s;
 
-function Position({ status, position }: { status: AiCitationStatus | EngineResult["status"] | undefined; position: number | null | undefined }) {
+function Position({
+  status,
+  position,
+  runs,
+}: {
+  status: AiCitationStatus | EngineResult["status"] | undefined;
+  position: number | null | undefined;
+  /** [passages où le client est cité, passages] */
+  runs?: [number, number] | null;
+}) {
+  const fraction = runs && runs[1] > 1 ? <span className="ml-0.5 text-[10px] opacity-75">{runs[0]}/{runs[1]}</span> : null;
   if (!status || status === "pending") return <span className="text-muted-foreground">…</span>;
   if (status === "error") return <span className="text-rose-400">erreur</span>;
-  if (status === "not_cited") return <span className="text-muted-foreground">—</span>;
-  return <span className="font-medium text-emerald-400">{position ? `${position}e` : "cité"}</span>;
+  if (runs && runs[0] > 0 && runs[0] < runs[1]) {
+    return (
+      <span className="font-medium text-amber-400" title="Cité dans une partie des passages seulement">
+        {position ? `${position}e` : "parfois"}
+        {fraction}
+      </span>
+    );
+  }
+  if (status === "not_cited") return <span className="text-muted-foreground">—{fraction}</span>;
+  return (
+    <span className="font-medium text-emerald-400">
+      {position ? `${position}e` : "cité"}
+      {fraction}
+    </span>
+  );
+}
+
+function runsTuple(result: EngineResult | undefined): [number, number] | null {
+  const c = citedRuns(result);
+  return c ? [c.cited, c.total] : null;
 }
 
 /** Historique des relevés automatiques du client. */
@@ -106,7 +135,11 @@ export function ScanRunDetail({
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           ["Score", `${s.score} %`, compare && cockpitScore !== null ? `Cockpit : ${cockpitScore} %` : null],
-          ["Taux de citation", `${s.ai_presence_rate} %`, `${s.cited} réponses sur ${s.answers}`],
+          [
+            "Taux de citation",
+            `${s.ai_presence_rate} %`,
+            `${s.cited} réponses sur ${s.answers}${s.runs_per_question && s.runs_per_question > 1 ? ` (${s.runs_per_question} passages par question)` : ""}`,
+          ],
           ["Top 3", `${s.top3_rate} %`, `${s.first_place} fois 1er`],
           [
             "Par moteur",
@@ -121,6 +154,19 @@ export function ScanRunDetail({
           </div>
         ))}
       </dl>
+
+      {s.stability && (s.runs_per_question ?? 1) > 1 && (
+        <div className="flex flex-wrap gap-2 text-xs">
+          <span className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-emerald-300">
+            Solide : {s.stability.solid} (cité à chaque passage)
+          </span>
+          <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-amber-300">
+            Fragile : {s.stability.fragile} (cité parfois, à travailler en priorité)
+          </span>
+          <span className="rounded-md border px-2 py-1 text-muted-foreground">Absent : {s.stability.absent}</span>
+          <span className="self-center text-muted-foreground">questions × moteurs</span>
+        </div>
+      )}
 
       <div>
         <h3 className="mb-2 text-sm font-medium">Part de voix ({s.questions} questions)</h3>
@@ -142,6 +188,31 @@ export function ScanRunDetail({
         <p className="mt-1 text-xs text-muted-foreground">Nombre de réponses qui citent la marque ({engines.map((e) => ENGINE[e]).join(" / ")}).</p>
       </div>
 
+      {s.discovered && s.discovered.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-sm font-medium">Autres entreprises citées par les IA</h3>
+          <div className="flex flex-wrap gap-2">
+            {s.discovered.map((d) => (
+              <span
+                key={d.name}
+                title={d.variants.length ? `Aussi écrit : ${d.variants.join(", ")}` : undefined}
+                className={cn(
+                  "rounded-md border px-2 py-1 text-xs",
+                  d.added ? "border-amber-500/40 bg-amber-500/10 text-amber-200" : "text-muted-foreground",
+                )}
+              >
+                {d.name} · {d.questions} question{d.questions > 1 ? "s" : ""}
+                {d.added && " · ajouté"}
+              </span>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Entreprises recommandées mais pas encore suivies. Celles citées dans au moins 2 questions et 3 réponses sont
+            ajoutées automatiquement aux concurrents (onglet Concurrents, où vous pouvez les retirer).
+          </p>
+        </div>
+      )}
+
       <div>
         <h3 className="mb-2 text-sm font-medium">Question par question</h3>
         <p className="mb-3 text-xs text-muted-foreground">
@@ -160,10 +231,10 @@ export function ScanRunDetail({
                       {engines.map((e) => (
                         <span key={e} className="flex items-center gap-1.5">
                           <span className="text-muted-foreground">{ENGINE[e]}</span>
-                          <Position status={r.engines[e]?.status} position={r.engines[e]?.position} />
+                          <Position status={r.engines[e]?.status} position={r.engines[e]?.position} runs={runsTuple(r.engines[e])} />
                           {compare && manual && (
                             <span className="text-muted-foreground">
-                              (cockpit <Position status={manual[`${e}_status`]} position={manual[`${e}_position`]} />)
+                              (cockpit <Position status={manual[`${e}_status`]} position={manual[`${e}_position`]} runs={manual.mention_runs?.[e]} />)
                             </span>
                           )}
                         </span>

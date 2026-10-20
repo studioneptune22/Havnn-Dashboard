@@ -87,6 +87,8 @@ export interface PromptMonitoring {
   position: number | null;
   ai_snippet: string | null;
   ai_snippets: Partial<Record<AiEngine, string>>;
+  /** Relevé à plusieurs passages : [passages où le client est cité, passages], par moteur. */
+  mention_runs?: Partial<Record<AiEngine, [number, number]>>;
   /** Établissement concerné, ou null pour une question transverse. */
   location_id: string | null;
   scanned_at: string;
@@ -168,6 +170,10 @@ export interface TrackedBrand {
   aliases: string[];
   is_client: boolean;
   sort_order: number;
+  /** Ajouté automatiquement par le robot (concurrent cité régulièrement par les IA). */
+  auto_added?: boolean;
+  /** Retiré à la main : ignoré par le robot et jamais rajouté. */
+  ignored?: boolean;
 }
 
 /** Relevé automatique : `test` = calibrage (Cockpit inchangé), `live` = publié dans le Cockpit. */

@@ -7,8 +7,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { analyzeAnswer, buildSnippet, cleanAnswer, findMentions, normalize, type BrandMatcher } from "./analyze";
+import { brandKey, brandsToAdd, discoverBrands } from "./discover";
 import { parseGemini, parseOpenAi } from "./engines";
 import { computeMetrics, dominanceScore, mainSnippet } from "./metrics";
+import { aggregateRuns, citedRuns, isUncertain } from "./runs";
 import type { EngineResult, QuestionResult } from "./types";
 
 const brands: BrandMatcher[] = [
@@ -198,5 +200,110 @@ describe("chiffres du Cockpit", () => {
     assert.equal(m.chatgpt_presence_rate, null);
     assert.equal(m.answers, 1);
     assert.equal(m.ai_presence_rate, 100);
+  });
+});
+
+describe("passages multiples", () => {
+  const run = (status: "cited" | "not_cited" | "error", position: number | null, mentions: string[] = [], ranking: string[] = []) => ({
+    status,
+    position,
+    mentions,
+    ranking,
+    answer: `réponse ${status}`,
+    snippet: status,
+    sources: [{ url: `https://${status}.fr` }],
+    ...(status === "error" ? { error: "HTTP 503" } : {}),
+  });
+
+  it("résume les passages : majorité, position médiane, passage représentatif", () => {
+    const r = aggregateRuns([run("not_cited", null), run("cited", 4), run("cited", 2)]);
+    assert.equal(r.status, "cited");
+    assert.equal(r.position, 3);
+    assert.equal(r.snippet, "cited");
+    assert.deepEqual(citedRuns(r), { cited: 2, total: 3 });
+    assert.equal(aggregateRuns([run("cited", 1), run("not_cited", null), run("not_cited", null)]).status, "not_cited");
+    assert.equal(aggregateRuns([run("error", null), run("error", null)]).status, "error");
+    assert.deepEqual(citedRuns(aggregateRuns([run("error", null), run("cited", 1)])), { cited: 1, total: 1 });
+  });
+
+  it("repère les résultats qui hésitent", () => {
+    assert.equal(isUncertain([run("cited", 1), run("not_cited", null), run("cited", 2)]), true);
+    assert.equal(isUncertain([run("cited", 1), run("cited", 1), run("error", null)]), false);
+    assert.equal(isUncertain([run("not_cited", null), run("not_cited", null)]), false);
+  });
+
+  it("calcule taux, stabilité et part de voix sur les passages", () => {
+    const results: QuestionResult[] = [
+      {
+        question: "q1",
+        location_id: null,
+        engines: {
+          chatgpt: aggregateRuns([
+            run("cited", 1, ["La Sainte Matière", "LV Métal"]),
+            run("cited", 2, ["La Sainte Matière"]),
+            run("not_cited", null, ["LV Métal"]),
+          ]),
+          gemini: aggregateRuns([run("not_cited", null), run("not_cited", null), run("not_cited", null)]),
+        },
+      },
+      {
+        question: "q2",
+        location_id: null,
+        engines: { chatgpt: aggregateRuns([run("cited", 1, ["La Sainte Matière"]), run("cited", 1, ["La Sainte Matière"]), run("error", null)]) },
+      },
+    ];
+    const m = computeMetrics(results, brands, { googleRating: null, napConformity: null });
+    assert.equal(m.answers, 8);
+    assert.equal(m.cited, 4);
+    assert.equal(m.errors, 1);
+    assert.equal(m.first_place, 3);
+    assert.deepEqual(m.stability, { solid: 1, fragile: 1, absent: 1 });
+    // q1 : 2/3 + q2 : 2/2 → 2 questions ; LV Métal : 2/3 → 1
+    assert.deepEqual(
+      m.share_of_voice.filter((b) => b.chatgpt).map((b) => [b.name, b.chatgpt]),
+      [
+        ["La Sainte Matière", 2],
+        ["LV Métal", 1],
+      ],
+    );
+  });
+});
+
+describe("concurrents détectés", () => {
+  const res = (question: string, rankings: string[][]): QuestionResult => ({
+    question,
+    location_id: null,
+    engines: {
+      chatgpt: {
+        status: "not_cited",
+        position: null,
+        mentions: [],
+        ranking: rankings[0]!,
+        snippet: null,
+        answer: "",
+        sources: [],
+        runs: rankings.map((ranking) => ({ status: "not_cited" as const, position: null, mentions: [], ranking })),
+      },
+    },
+  });
+
+  it("regroupe les écritures, écarte plateformes, marques suivies et concurrents retirés", () => {
+    const results = [
+      res("q1", [["ETS Lerch Bruno — Monswiller", "LV Métal", "PagesJaunes"], ["Lerch Bruno", "Atelier Dupont"]]),
+      res("q2", [["Ets Lerch Bruno (Monswiller)", "Houzz"], ["Atelier Dupont"]]),
+      res("q3", [["Forge Untel"]]),
+    ];
+    const found = discoverBrands(results, brands, new Set([brandKey("Forge Untel")]));
+    assert.deepEqual(
+      found.map((d) => [d.name, d.questions, d.answers]),
+      [
+        ["ETS Lerch Bruno", 2, 3],
+        ["Atelier Dupont", 2, 2],
+      ],
+    );
+    assert.deepEqual(found[0]!.variants, ["Lerch Bruno", "Ets Lerch Bruno"]);
+    // Seuil : 2 questions et 3 réponses
+    assert.deepEqual(brandsToAdd(found, 10).map((d) => d.name), ["ETS Lerch Bruno"]);
+    assert.deepEqual(brandsToAdd(found, 30), []);
   });
 });
