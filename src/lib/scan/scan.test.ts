@@ -11,6 +11,7 @@ import { brandKey, brandsToAdd, discoverBrands } from "./discover";
 import { parseGemini, parseOpenAi } from "./engines";
 import { computeMetrics, dominanceScore, mainSnippet } from "./metrics";
 import { aggregateRuns, citedRuns, isUncertain } from "./runs";
+import { scannedThisMonth } from "./run";
 import type { EngineResult, QuestionResult } from "./types";
 
 const brands: BrandMatcher[] = [
@@ -305,5 +306,17 @@ describe("concurrents détectés", () => {
     // Seuil : 2 questions et 3 réponses
     assert.deepEqual(brandsToAdd(found, 10).map((d) => d.name), ["ETS Lerch Bruno"]);
     assert.deepEqual(brandsToAdd(found, 30), []);
+  });
+});
+
+describe("relevés de rattrapage", () => {
+  it("ne retient que les clients relevés depuis le 1er du mois", () => {
+    const runs = [
+      { company_id: "a", created_at: "2026-10-27T10:07:00Z" },
+      { company_id: "b", created_at: "2026-09-27T05:00:00Z" },
+      { company_id: "c", created_at: "2026-10-01T00:00:00Z" },
+    ];
+    assert.deepEqual([...scannedThisMonth(runs, new Date("2026-10-28T04:23:00Z"))].sort(), ["a", "c"]);
+    assert.equal(scannedThisMonth(runs, new Date("2026-11-27T04:23:00Z")).size, 0);
   });
 });

@@ -1,6 +1,6 @@
 # HAVNN — Feuille de route
 
-_Dernière mise à jour : 14 octobre 2026_
+_Dernière mise à jour : 20 octobre 2026_
 
 ## 🎯 Priorité : acquisition par le test IA en libre-service (octobre 2026)
 
@@ -26,6 +26,47 @@ Ordre de réalisation (≈ 6 séances), chaque brique servant aussi aux clients 
    vue admin (tests réalisés, e-mails laissés, audits réservés, clients signés, par support).
 5. **Démo de l'audit flash** (1/2 séance) : depuis la vue admin, générer en un clic le cockpit lite d'un prospect
    avant l'appel de 15 min, pour lui montrer son propre tableau de bord.
+
+### Décisions du 20 octobre 2026
+
+- **Impression des flyers : fin de semaine / début de semaine prochaine.** Un lien Bitly par support (suivi des
+  origines, demandé par Jérôme) ; chaque lien Bitly pointe vers une adresse sur havnn.fr avec la source
+  (`https://www.havnn.fr/test-visibilite-ia/?utm_source=flyer&utm_medium=qr`, `utm_source=carte`…). Ne jamais
+  utiliser `?s=` : c'est le paramètre de recherche de WordPress. Le QR code encode le lien Bitly. Comme la
+  destination est une adresse de havnn.fr, elle reste redirigeable même si Bitly ne permet pas de modifier le lien ;
+  la source est transmise au test et enregistrée avec chaque lead. Page WordPress créée par le projet Claude « site
+  havnn.fr » : d'abord page d'attente avec bouton Cal.com, puis bouton « Lancer mon test » vers le test du cockpit
+  (paramètres utm_* transmis). Le test doit être prêt pour la **distribution**, pas pour l'impression.
+- **Un seul test par entreprise** : juste ce qu'il faut pour donner envie de réserver l'audit flash gratuit
+  (https://cal.com/jerome-geo/15min). Pas de relevé mensuel pour les comptes lite.
+- **Ordre** : 0. QR code et page d'attente → 1. envoi d'e-mails depuis havnn.fr (Resend + DNS, brique commune)
+  → 2. test lite + onglet Leads → 3. rapport mensuel (premier vrai rapport : 28 novembre).
+- ✅ **Cockpit sur https://cockpit.havnn.fr** (CNAME o2switch → Vercel, Site URL et Redirect URL Supabase à
+  jour). havnn.fr est un WordPress hébergé chez o2switch (cPanel).
+- ✅ **Resend** : domaine havnn.fr vérifié (région Irlande ; lignes DKIM `resend._domainkey`, CNAME `send` et
+  `rsend` chez o2switch ; réception désactivée, la boîte mail reste chez o2switch).
+- **En pause (reprise ici)** : vérifier la clé `RESEND_API_KEY` (envoi seul) dans Vercel ; clé `supabase-auth` +
+  SMTP personnalisé dans Supabase (smtp.resend.com:465, utilisateur `resend`, expéditeur `HAVNN <cockpit@havnn.fr>`)
+  puis test « mot de passe oublié » ; ligne DMARC `_dmarc` TXT `v=DMARC1; p=none;` si absente. Ensuite : construction
+  du test lite sur cockpit.havnn.fr.
+
+## 📨 Rapport mensuel « Votre rapport mensuel GEO »
+
+- **Le 27 tôt le matin** : relevé publié, puis le robot prépare un rapport brouillon par client : score et
+  évolution, questions où il est cité (gagnées, perdues), part de voix des concurrents, journal du mois, et un
+  **brouillon de préconisations** pour le mois suivant (questions absentes ou fragiles, concurrents qui montent).
+- **Le 27 dans la journée** : Jérôme reçoit « N rapports à valider », relit, corrige et enrichit les
+  préconisations dans la vue admin.
+- **Envoi uniquement après validation de Jérôme** (jamais automatique) : le 28 en semaine, sinon le jour de la
+  validation (ex. le lundi si le 28 tombe un week-end).
+- Forme : e-mail court (score, 3 chiffres clés, priorités) + bouton vers une page Rapport du cockpit,
+  enregistrable en PDF, qui garde l'historique des rapports.
+
+## 📰 Cockpit : derniers articles du blog HAVNN
+
+À reprendre avec Jérôme : afficher dans le cockpit les derniers articles de https://www.havnn.fr/blog/ (projet
+« Blog Havnn »). Piste : lecture du flux RSS du blog si l'outil du site en fournit un, mise en cache côté serveur,
+bloc « Les derniers articles HAVNN » sur la vue d'ensemble.
 
 ## 🌐 Site havnn.fr : home V2
 

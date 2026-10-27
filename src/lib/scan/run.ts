@@ -37,6 +37,8 @@ export interface RunOptions {
   runs?: number;
   /** Passages au maximum quand le résultat hésite (5 par défaut). */
   maxRuns?: number;
+  /** Saute les clients déjà relevés en live ce mois-ci (relevés planifiés de rattrapage). */
+  skipDone?: boolean;
   now?: () => Date;
   log?: (line: string) => void;
 }
@@ -71,6 +73,12 @@ async function pool<T, R>(items: T[], size: number, fn: (item: T, index: number)
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
+/** Clients ayant déjà un relevé live publié (ok ou partiel) depuis le 1er du mois en cours (UTC). */
+export function scannedThisMonth(runs: { company_id: string; created_at: string }[], now: Date): Set<string> {
+  const monthStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
+  return new Set(runs.filter((r) => new Date(r.created_at).getTime() >= monthStart).map((r) => r.company_id));
+}
+
 export async function runScan(db: SupabaseClient, ai: AiClient, options: RunOptions): Promise<CompanyReport[]> {
   const log = options.log ?? console.log;
   const now = options.now ?? (() => new Date());
@@ -93,8 +101,25 @@ export async function runScan(db: SupabaseClient, ai: AiClient, options: RunOpti
     return [];
   }
 
+  let done = new Set<string>();
+  if (options.skipDone) {
+    const { data: runs, error: runsError } = await db
+      .from("scan_runs")
+      .select("company_id, created_at")
+      .eq("mode", "live")
+      .in("status", ["ok", "partial"])
+      .in("company_id", companies.map((c) => c.id));
+    if (runsError) throw new Error(`Lecture des relevés : ${runsError.message}`);
+    done = scannedThisMonth(runs ?? [], now());
+  }
+
   const reports: CompanyReport[] = [];
   for (const company of companies) {
+    if (done.has(company.id)) {
+      log(`⏭ ${company.name} : déjà relevé ce mois-ci`);
+      reports.push({ company: company.name, status: "skipped", detail: "déjà relevé ce mois-ci" });
+      continue;
+    }
     try {
       reports.push(await scanCompany(db, ai, company, options, now, log));
     } catch (e) {

@@ -5,6 +5,7 @@
  *   npx tsx scripts/scan.ts --mode=live --company=dgco-fermetures.com
  *   npx tsx scripts/scan.ts --mode=test --company=… --no-save  # essai sans rien enregistrer
  *   npx tsx scripts/scan.ts --mode=test --runs=1                # 1 passage par question (5 par défaut)
+ *   npx tsx scripts/scan.ts --mode=live --skip-done             # saute les clients déjà relevés ce mois-ci
  *
  * Variables : SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL), SUPABASE_SERVICE_ROLE_KEY,
  * OPENAI_API_KEY, GEMINI_API_KEY, et en option OPENAI_MODEL, GEMINI_MODEL, GEMINI_ANALYSIS_MODEL.
@@ -28,6 +29,7 @@ async function main() {
   if (mode !== "test" && mode !== "live") throw new Error("--mode doit valoir test ou live");
   const companies = arg("company")?.split(",").map((c) => c.trim()).filter(Boolean);
   const noSave = process.argv.includes("--no-save");
+  const skipDone = process.argv.includes("--skip-done");
   const runs = Number(arg("runs") ?? env("SCAN_RUNS") ?? 5);
   if (!Number.isInteger(runs) || runs < 1 || runs > 5) throw new Error("--runs doit valoir de 1 à 5");
 
@@ -49,7 +51,7 @@ async function main() {
   console.log(`Relevé ${mode === "live" ? "PUBLIÉ dans le Cockpit" : "de TEST (Cockpit inchangé)"}${noSave ? ", sans enregistrement" : ""}`);
   console.log(`Modèles : ${Object.entries(ai.models).map(([k, v]) => `${k} = ${v}`).join(" · ")}\n`);
 
-  const reports = await runScan(db, ai, { mode, companies, noSave, runs, maxRuns: Math.max(runs, 5) });
+  const reports = await runScan(db, ai, { mode, companies, noSave, runs, maxRuns: Math.max(runs, 5), skipDone });
   writeJobSummary(mode, reports);
 
   if (reports.some((r) => r.status === "error")) process.exitCode = 1;
