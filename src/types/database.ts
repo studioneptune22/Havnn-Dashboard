@@ -13,6 +13,7 @@ export type ActivityCategory =
   | "llms_txt"
   | "report"
   | "monitoring"
+  | "seo"
   | "other";
 export type DocumentCategory = "monthly_report" | "roadmap" | "contract" | "csv_export" | "other";
 export type CheckStatus = "ok" | "warning" | "error" | "pending";
@@ -26,7 +27,28 @@ export interface Company {
   city: string | null;
   sector: string | null;
   plan_status: "onboarding" | "active" | "paused";
+  /** Fiche Google Maps (Place ID) : note et avis relevés chaque jour. */
+  google_place_id?: string | null;
+  /** Inclus dans le relevé automatique mensuel ChatGPT / Gemini. */
+  auto_scan?: boolean;
   created_at: string;
+}
+
+/** Établissement d'un client multi-sites (centre, agence…). */
+export interface Location {
+  id: string;
+  company_id: string;
+  name: string;
+  brand: string | null;
+  address: string | null;
+  postal_code: string | null;
+  city: string | null;
+  phone: string | null;
+  google_rating: number | null;
+  google_reviews_total: number | null;
+  google_maps_url: string | null;
+  google_place_id?: string | null;
+  sort_order: number;
 }
 
 export interface AppUser {
@@ -65,6 +87,10 @@ export interface PromptMonitoring {
   position: number | null;
   ai_snippet: string | null;
   ai_snippets: Partial<Record<AiEngine, string>>;
+  /** Relevé à plusieurs passages : [passages où le client est cité, passages], par moteur. */
+  mention_runs?: Partial<Record<AiEngine, [number, number]>>;
+  /** Établissement concerné, ou null pour une question transverse. */
+  location_id: string | null;
   scanned_at: string;
 }
 
@@ -114,6 +140,8 @@ export interface TechnicalCheck {
 export interface NapCitation {
   id: string;
   company_id: string;
+  /** Établissement concerné, ou null pour une fiche unique (client mono-site). */
+  location_id: string | null;
   platform: string;
   listing_url: string | null;
   name_ok: boolean;
@@ -172,4 +200,31 @@ export interface Prospect {
   statut: ProspectStatus;
   rapport: ProspectReport;
   utm: Record<string, string> | null;
+}
+
+/** Marque reconnue dans les réponses des IA : le client ou un concurrent suivi. */
+export interface TrackedBrand {
+  id: string;
+  company_id: string;
+  name: string;
+  /** Variantes de nom reconnues (« Axhome » pour « Ax'home »…). */
+  aliases: string[];
+  is_client: boolean;
+  sort_order: number;
+  /** Ajouté automatiquement par le robot (concurrent cité régulièrement par les IA). */
+  auto_added?: boolean;
+  /** Retiré à la main : ignoré par le robot et jamais rajouté. */
+  ignored?: boolean;
+}
+
+/** Relevé automatique : `test` = calibrage (Cockpit inchangé), `live` = publié dans le Cockpit. */
+export interface ScanRun {
+  id: string;
+  company_id: string;
+  mode: "test" | "live";
+  status: "ok" | "partial" | "error";
+  summary: import("@/lib/scan/types").ScanSummary | Record<string, never>;
+  results: import("@/lib/scan/types").QuestionResult[];
+  error: string | null;
+  created_at: string;
 }

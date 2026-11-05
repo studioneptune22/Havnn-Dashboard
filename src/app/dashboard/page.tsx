@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { Bot, Gauge, MapPinOff, Star } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Bot, Gauge, MapPinOff, Star } from "lucide-react";
 
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
-import { ENGINE_COLORS, ENGINE_LABELS } from "@/components/dashboard/chart-theme";
+import { ACTIVE_ENGINES, ENGINE_COLORS, ENGINE_LABELS } from "@/components/dashboard/chart-theme";
 import { DeltaBadge } from "@/components/dashboard/delta-badge";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { LocationsCard } from "@/components/dashboard/locations-card";
 import { PeriodSelect } from "@/components/dashboard/period-select";
 import { ScoreGauge } from "@/components/dashboard/score-gauge";
 import { ScoreTrendChart } from "@/components/dashboard/score-trend-chart";
@@ -13,23 +15,33 @@ import { AccountStatusBadge } from "@/components/dashboard/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { parsePeriod } from "@/lib/data/period";
-import { getCockpitData, getSession } from "@/lib/data/queries";
+import { getCockpitData, getLocations, getNapCitations, getSession } from "@/lib/data/queries";
+import { groupGoogleRating } from "@/lib/locations";
 import { delta, formatDateLong } from "@/lib/utils";
-import type { AiEngine } from "@/types/database";
+import type { ShareOfVoice } from "@/types/database";
 
 export const metadata: Metadata = { title: "Cockpit" };
+
+const mentions = (b: ShareOfVoice) => ACTIVE_ENGINES.reduce((sum, e) => sum + b[`${e}_mentions`], 0);
 
 export default async function CockpitPage({ searchParams }: { searchParams: { period?: string } }) {
   const period = parsePeriod(searchParams.period);
   const { company } = await getSession();
-  const { scores, latest, previous, shareOfVoice, activity } = await getCockpitData(company.id, period);
+  const [{ scores, latest, previous, shareOfVoice, activity }, locations] = await Promise.all([
+    getCockpitData(company.id, period),
+    getLocations(company.id),
+  ]);
+  const multiSite = locations.length > 0;
+  const nap = multiSite ? await getNapCitations(company.id) : [];
+
+  // Multi-sites : la note Google affichée est celle du groupe (moyenne pondérée par les avis).
+  const group = groupGoogleRating(locations);
+  const googleRating = multiSite ? group.rating : latest?.google_rating ?? null;
+  const googleReviews = multiSite ? group.reviews : latest?.google_reviews_total ?? 0;
 
   const client = shareOfVoice.find((b) => b.is_client);
-  const totalMentions = shareOfVoice.reduce(
-    (sum, b) => sum + b.chatgpt_mentions + b.perplexity_mentions + b.gemini_mentions,
-    0,
-  );
-  const clientMentions = client ? client.chatgpt_mentions + client.perplexity_mentions + client.gemini_mentions : 0;
+  const totalMentions = shareOfVoice.reduce((sum, b) => sum + mentions(b), 0);
+  const clientMentions = client ? mentions(client) : 0;
   const clientShare = totalMentions ? Math.round((clientMentions / totalMentions) * 100) : 0;
   const initialNapErrors = scores[0]?.nap_errors_count ?? latest?.nap_errors_count ?? 0;
 
@@ -41,7 +53,7 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
           <p className="mb-1 text-xs font-medium uppercase tracking-wider text-havnn-blue">Cockpit GEO</p>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{company.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {[company.sector, company.city].filter(Boolean).join(" · ")}
+            {[company.sector, multiSite ? `${locations.length} centres` : company.city].filter(Boolean).join(" · ")}
             {latest && <> · Dernière mise à jour le {formatDateLong(latest.recorded_at)}</>}
           </p>
         </div>
@@ -73,19 +85,19 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
               footer={<DeltaBadge value={delta(latest.ai_presence_rate, previous?.ai_presence_rate)} />}
             >
               <div className="text-4xl font-semibold tracking-tight tabular">
-                {Number(latest.ai_presence_rate).toLocaleString("fr-FR")}
+                {Math.round(Number(latest.ai_presence_rate))}
                 <span className="text-xl text-muted-foreground">%</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">des requêtes avec la marque dans le Top 3</p>
               <div className="mt-4 space-y-2">
-                {(["chatgpt", "perplexity", "gemini"] as AiEngine[]).map((engine) => {
+                {ACTIVE_ENGINES.map((engine) => {
                   const rate = latest[`${engine}_presence_rate`];
                   if (rate === null) return null;
                   return (
                     <div key={engine} className="grid grid-cols-[72px_1fr_36px] items-center gap-2 text-xs">
                       <span className="text-muted-foreground">{ENGINE_LABELS[engine]}</span>
                       <Progress value={Number(rate)} className="h-1.5" indicatorClassName="bg-[var(--c)]" style={{ ["--c" as string]: ENGINE_COLORS[engine] }} />
-                      <span className="text-right tabular">{Number(rate)}%</span>
+                      <span className="text-right tabular">{Math.round(Number(rate))}%</span>
                     </div>
                   );
                 })}
@@ -105,7 +117,7 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
             >
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-semibold tracking-tight tabular">
-                  {latest.google_rating?.toLocaleString("fr-FR", { minimumFractionDigits: 1 }) ?? "—"}
+                  {googleRating?.toLocaleString("fr-FR", { minimumFractionDigits: 1 }) ?? "—"}
                 </span>
                 <span className="text-xl text-muted-foreground">/ 5</span>
               </div>
@@ -114,7 +126,7 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
                   <Star
                     key={i}
                     className={
-                      i < Math.round(latest.google_rating ?? 0)
+                      i < Math.round(googleRating ?? 0)
                         ? "h-4 w-4 fill-amber-400 text-amber-400"
                         : "h-4 w-4 text-havnn-line"
                     }
@@ -122,8 +134,10 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
                 ))}
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground tabular">{latest.google_reviews_total ?? 0}</span> avis au
-                total sur votre fiche Google Business Profile
+                <span className="font-medium text-foreground tabular">{googleReviews}</span> avis au total sur{" "}
+                {multiSite
+                  ? `vos ${group.rated} fiche${group.rated > 1 ? "s" : ""} Google (moyenne pondérée)`
+                  : "votre fiche Google Business Profile"}
               </p>
             </KpiCard>
 
@@ -171,7 +185,7 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
 
           {/* ---------------------------------------------- Part de voix + journal */}
           <section className="mt-4 grid gap-4 xl:grid-cols-3">
-            <Card className="xl:col-span-2">
+            <Card className="min-w-0 xl:col-span-2">
               <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
                 <div className="space-y-1.5">
                   <CardTitle className="text-base">Part de Voix IA</CardTitle>
@@ -197,15 +211,29 @@ export default async function CockpitPage({ searchParams }: { searchParams: { pe
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Journal d&apos;activité</CardTitle>
-                <CardDescription>Dernières actions réalisées par HAVNN</CardDescription>
+              <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+                <div className="space-y-1.5">
+                  <CardTitle className="text-base">Journal d&apos;activité</CardTitle>
+                  <CardDescription>Dernières actions réalisées par HAVNN</CardDescription>
+                </div>
+                <Link
+                  href="/dashboard/journal"
+                  className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-havnn-blue hover:underline"
+                >
+                  Tout voir <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </CardHeader>
               <CardContent>
                 <ActivityFeed items={activity} />
               </CardContent>
             </Card>
           </section>
+
+          {multiSite && (
+            <section className="mt-4">
+              <LocationsCard locations={locations} nap={nap} />
+            </section>
+          )}
 
           {/* ---------------------------------------------------- Évolution */}
           <section className="mt-4">

@@ -5,14 +5,15 @@ import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
-import { NAV_ITEMS } from "./nav-items";
+import { ADMIN_NAV_ITEM, NAV_ITEMS } from "./nav-items";
 
-export function SidebarNav({ onNavigate, isAdmin = false }: { onNavigate?: () => void; isAdmin?: boolean }) {
+export function SidebarNav({ onNavigate, admin = false }: { onNavigate?: () => void; admin?: boolean }) {
   const pathname = usePathname();
+  const items = admin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS.filter((item) => !item.adminOnly);
 
   return (
     <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.filter((item) => isAdmin || !item.adminOnly).map(({ href, label, icon: Icon }) => {
+      {items.map(({ href, label, icon: Icon }) => {
         const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
         return (
           <Link

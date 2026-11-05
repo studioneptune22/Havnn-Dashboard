@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -10,6 +11,7 @@ import type {
   Company,
   DocumentItem,
   GeoScore,
+  Location,
   NapCitation,
   PromptMonitoring,
   Prospect,
@@ -29,14 +31,22 @@ import { periodStart, type Period } from "./period";
 
 export interface Session {
   user: AppUser;
+  /** Entreprise affichée : celle de l'utilisateur, ou le client choisi dans la vue admin. */
   company: Company;
   demo: boolean;
+  /** Consultant HAVNN (rôle havnn_admin) : vue admin et sélecteur de client. */
+  admin: boolean;
 }
+
+/** Cookie du client consulté par un admin HAVNN (sélecteur de la barre latérale). */
+export const ADMIN_COMPANY_COOKIE = "havnn_company";
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const getSession = cache(async (): Promise<Session> => {
   if (!isSupabaseConfigured) {
     return {
       demo: true,
+      admin: false,
       company: mock.mockCompany,
       user: {
         id: "demo-user",
@@ -60,22 +70,67 @@ export const getSession = cache(async (): Promise<Session> => {
     .eq("id", authUser.id)
     .single<AppUser>();
 
-  if (!profile?.company_id) redirect("/login?error=no_company");
+  const admin = profile?.role === "havnn_admin";
+  if (!profile || (!profile.company_id && !admin)) redirect("/login?error=no_company");
 
-  const { data: company } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("id", profile.company_id)
-    .single<Company>();
+  // Un admin consulte le client choisi dans le sélecteur (le RLS lui ouvre toutes les entreprises).
+  const chosen = admin ? cookies().get(ADMIN_COMPANY_COOKIE)?.value : undefined;
+  const companyId = chosen && UUID_RE.test(chosen) ? chosen : profile.company_id;
+
+  let company: Company | null = null;
+  if (companyId) {
+    const { data } = await supabase.from("companies").select("*").eq("id", companyId).maybeSingle<Company>();
+    company = data;
+  }
+  if (!company && admin) {
+    // Client supprimé ou admin sans entreprise : premier client par ordre alphabétique.
+    const { data } = await supabase.from("companies").select("*").order("name").limit(1).maybeSingle<Company>();
+    company = data;
+  }
 
   if (!company) redirect("/login?error=no_company");
 
-  return { user: profile, company, demo: false };
+  return { user: profile, company, demo: false, admin };
 });
 
-/** Équipe Havnn. En mode démo, tout est visible (données fictives). */
-export function isAdmin(session: Session) {
-  return session.demo || session.user.role === "havnn_admin";
+/** Liste des clients pour le sélecteur de la vue admin. */
+export const getCompanyOptions = cache(async (): Promise<Pick<Company, "id" | "name">[]> => {
+  if (!isSupabaseConfigured) return [];
+  const supabase = createClient();
+  const { data } = await supabase.from("companies").select("id, name").order("name");
+  return data ?? [];
+});
+
+// -----------------------------------------------------------------------------
+// Établissements (clients multi-sites)
+// -----------------------------------------------------------------------------
+/** Établissements du client, dans l'ordre d'affichage. Vide pour un client mono-site. */
+export const getLocations = cache(async (companyId: string): Promise<Location[]> => {
+  if (!isSupabaseConfigured) return [];
+
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("locations")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("sort_order")
+    .order("name")
+    .returns<Location[]>();
+  return data ?? [];
+});
+
+/** Fiches NAP (toutes plateformes, tous établissements). */
+export async function getNapCitations(companyId: string): Promise<NapCitation[]> {
+  if (!isSupabaseConfigured) return mock.mockNapCitations;
+
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("nap_citations")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("platform")
+    .returns<NapCitation[]>();
+  return data ?? [];
 }
 
 // -----------------------------------------------------------------------------
@@ -160,6 +215,21 @@ export async function getCockpitData(companyId: string, period: Period): Promise
   };
 }
 
+/** Journal d'activité, du plus récent au plus ancien. */
+export async function getActivity(companyId: string, limit: number): Promise<ActivityLog[]> {
+  if (!isSupabaseConfigured) return mock.mockActivity.slice(0, limit);
+
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("activity_logs")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false })
+    .limit(limit)
+    .returns<ActivityLog[]>();
+  return data ?? [];
+}
+
 // -----------------------------------------------------------------------------
 // Benchmark IA & Prompts
 // -----------------------------------------------------------------------------
@@ -193,7 +263,7 @@ export async function getAuditData(companyId: string): Promise<AuditData> {
   const supabase = createClient();
   const [checks, nap, sentiment] = await Promise.all([
     supabase.from("technical_checks").select("*").eq("company_id", companyId).order("item_key").returns<TechnicalCheck[]>(),
-    supabase.from("nap_citations").select("*").eq("company_id", companyId).order("platform").returns<NapCitation[]>(),
+    getNapCitations(companyId),
     supabase
       .from("sentiment_snapshots")
       .select("*")
@@ -209,7 +279,7 @@ export async function getAuditData(companyId: string): Promise<AuditData> {
 
   return {
     checks: checks.data ?? [],
-    nap: nap.data ?? [],
+    nap,
     sentiment: Array.from(latestBySource.values()),
   };
 }

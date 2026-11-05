@@ -15,11 +15,12 @@ export function PillarCard({
   title: string;
   description: string;
   icon: LucideIcon;
-  /** 0–100 */
-  score: number;
+  /** 0–100, ou null tant que le pilier n'a pas encore été audité. */
+  score: number | null;
   children: React.ReactNode;
 }) {
-  const color = score >= 90 ? "bg-havnn-emerald" : score >= 60 ? "bg-havnn-blue" : "bg-havnn-amber";
+  const color =
+    score === null ? "" : score >= 90 ? "bg-havnn-emerald" : score >= 60 ? "bg-havnn-blue" : "bg-havnn-amber";
   return (
     <Card className="flex flex-col">
       <CardHeader>
@@ -35,11 +36,11 @@ export function PillarCard({
             </div>
           </div>
           <div className="text-right">
-            <div className="text-xl font-semibold tabular">{score}%</div>
-            <div className="text-[11px] text-muted-foreground">conformité</div>
+            <div className="text-xl font-semibold tabular">{score === null ? "—" : `${score}%`}</div>
+            <div className="text-[11px] text-muted-foreground">{score === null ? "audit à venir" : "conformité"}</div>
           </div>
         </div>
-        <Progress value={score} className="mt-3 h-1.5" indicatorClassName={color} />
+        <Progress value={score ?? 0} className="mt-3 h-1.5" indicatorClassName={color} />
       </CardHeader>
       <CardContent className="flex-1">{children}</CardContent>
     </Card>

@@ -66,7 +66,7 @@ insert into public.nap_citations (company_id, platform, name_ok, address_ok, pho
   ('8f1c2a7e-3b4d-4e5f-9a1b-2c3d4e5f6a7b', 'PagesJaunes', true, true, true),
   ('8f1c2a7e-3b4d-4e5f-9a1b-2c3d4e5f6a7b', 'Facebook', true, true, true),
   ('8f1c2a7e-3b4d-4e5f-9a1b-2c3d4e5f6a7b', 'Houzz', true, false, true)
-on conflict (company_id, platform) do nothing;
+on conflict (company_id, location_id, platform) do nothing;
 
 insert into public.sentiment_snapshots (company_id, source, positive_pct, neutral_pct, critical_pct, summary) values
   ('8f1c2a7e-3b4d-4e5f-9a1b-2c3d4e5f6a7b', 'google_reviews', 91, 6, 3, 'Qualité des finitions et ponctualité très citées.'),

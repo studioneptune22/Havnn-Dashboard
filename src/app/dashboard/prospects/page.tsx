@@ -5,13 +5,13 @@ import { CalendarCheck, Gauge, UserPlus } from "lucide-react";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { ProspectsTable } from "@/components/prospects/prospects-table";
-import { getProspects, getSession, isAdmin } from "@/lib/data/queries";
+import { getProspects, getSession } from "@/lib/data/queries";
 
 export const metadata: Metadata = { title: "Prospects" };
 
 export default async function ProspectsPage() {
   const session = await getSession();
-  if (!isAdmin(session)) notFound();
+  if (!session.admin) notFound();
 
   const prospects = await getProspects();
 
