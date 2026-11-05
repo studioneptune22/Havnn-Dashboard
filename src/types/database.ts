@@ -132,3 +132,44 @@ export interface SentimentSnapshot {
   summary: string | null;
   recorded_at: string;
 }
+
+// -----------------------------------------------------------------------------
+// Prospects : tests de visibilité IA faits sur havnn.fr (table tests_visibilite_ia)
+// -----------------------------------------------------------------------------
+export type ProspectStatus = "nouveau" | "rappele" | "audit_reserve" | "client" | "pas_interesse";
+
+export interface ProspectVolet {
+  id: string;
+  label: string;
+  points: number;
+  max: number;
+  available: boolean;
+}
+
+export interface ProspectReport {
+  score: number;
+  complet?: boolean;
+  volets: ProspectVolet[];
+  priorities: { id: string; label: string; detail?: string; fix?: string | null }[];
+  ia?: { competitors?: { name: string; count: number }[] };
+}
+
+export interface Prospect {
+  id: string;
+  created_at: string;
+  prenom: string;
+  nom: string;
+  email: string;
+  telephone: string;
+  entreprise: string;
+  metier: string;
+  ville: string;
+  site: string;
+  score: number;
+  score_ia: number | null;
+  score_technique: number | null;
+  score_google: number | null;
+  statut: ProspectStatus;
+  rapport: ProspectReport;
+  utm: Record<string, string> | null;
+}

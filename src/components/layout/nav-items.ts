@@ -1,10 +1,12 @@
-import { FileText, Gauge, MessageSquareText, ShieldCheck, type LucideIcon } from "lucide-react";
+import { FileText, Gauge, MessageSquareText, ShieldCheck, UserPlus, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   href: string;
   label: string;
   description: string;
   icon: LucideIcon;
+  /** Visible seulement pour l'équipe Havnn (rôle havnn_admin). */
+  adminOnly?: boolean;
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -12,4 +14,5 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/geo-prompts", label: "Benchmark IA & Prompts", description: "Suivi des prompts métiers", icon: MessageSquareText },
   { href: "/dashboard/audit-technique", label: "Structure & Factualité", description: "Les 4 piliers GEO", icon: ShieldCheck },
   { href: "/dashboard/rapports", label: "Documents & Rapports", description: "Rapports & coffre-fort", icon: FileText },
+  { href: "/dashboard/prospects", label: "Prospects", description: "Tests de visibilité IA du site", icon: UserPlus, adminOnly: true },
 ];

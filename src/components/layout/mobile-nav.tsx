@@ -9,7 +9,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { HavnnLogo } from "./logo";
 import { SidebarNav } from "./sidebar-nav";
 
-export function MobileNav({ footer }: { footer: React.ReactNode }) {
+export function MobileNav({ footer, isAdmin = false }: { footer: React.ReactNode; isAdmin?: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -22,7 +22,7 @@ export function MobileNav({ footer }: { footer: React.ReactNode }) {
       <SheetContent side="left" className="flex w-72 flex-col p-4">
         <SheetTitle className="sr-only">Navigation</SheetTitle>
         <HavnnLogo withTagline className="mb-6 px-2" />
-        <SidebarNav onNavigate={() => setOpen(false)} />
+        <SidebarNav onNavigate={() => setOpen(false)} isAdmin={isAdmin} />
         <div className="mt-auto">{footer}</div>
       </SheetContent>
     </Sheet>
