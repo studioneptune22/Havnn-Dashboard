@@ -14,6 +14,7 @@ import type {
   Location,
   NapCitation,
   PromptMonitoring,
+  Prospect,
   SentimentSnapshot,
   ShareOfVoice,
   TechnicalCheck,
@@ -307,4 +308,25 @@ export async function getDocuments(companyId: string): Promise<DocumentItem[]> {
   const urlByPath = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]));
 
   return docs.map((d) => ({ ...d, file_url: urlByPath.get(d.file_url) ?? d.file_url }));
+}
+
+// -----------------------------------------------------------------------------
+// Prospects (équipe Havnn) : tests de visibilité IA faits sur havnn.fr
+// -----------------------------------------------------------------------------
+export async function getProspects(): Promise<Prospect[]> {
+  if (!isSupabaseConfigured) return mock.mockProspects;
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("tests_visibilite_ia")
+    .select(
+      "id, created_at, prenom, nom, email, telephone, entreprise, metier, ville, site, score, score_ia, score_technique, score_google, statut, rapport, utm",
+    )
+    .order("created_at", { ascending: false })
+    .limit(300)
+    .returns<Prospect[]>();
+
+  // Table pas encore créée ou droits manquants : on affiche une liste vide.
+  if (error) console.error("Prospects indisponibles", error.message);
+  return data ?? [];
 }
