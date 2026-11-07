@@ -10,6 +10,7 @@ import type {
   GeoScore,
   NapCitation,
   PromptMonitoring,
+  Prospect,
   SentimentSnapshot,
   ShareOfVoice,
   TechnicalCheck,
@@ -337,3 +338,51 @@ export const mockDocuments: DocumentItem[] = docs.map(([title, category, file_si
   period,
   created_at,
 }));
+
+// -----------------------------------------------------------------------------
+// Prospects (tests de visibilité IA) : exemples fictifs
+// -----------------------------------------------------------------------------
+type ProspectRow = [string, string, string, string, string, string, string, number, number, number, number, Prospect["statut"]];
+const prospectRows: ProspectRow[] = [
+  ["2026-11-04T09:12:00Z", "Paul", "Keller", "Toitures Keller", "couvreur", "Strasbourg", "toitures-keller.fr", 38, 12, 18, 8, "nouveau"],
+  ["2026-11-03T17:40:00Z", "Léa", "Muller", "Boulangerie Muller", "boulangerie", "Haguenau", "boulangerie-muller.fr", 61, 25, 22, 14, "rappele"],
+  ["2026-11-02T11:05:00Z", "Karim", "Benali", "KB Plomberie", "plombier", "Illkirch", "kb-plomberie.fr", 47, 17, 16, 14, "audit_reserve"],
+  ["2026-10-29T08:30:00Z", "Sophie", "Roth", "Cabinet Roth", "kinésithérapeute", "Schiltigheim", "cabinet-roth.fr", 72, 33, 24, 15, "client"],
+  ["2026-10-27T14:22:00Z", "Marc", "Weber", "Weber Auto", "garage automobile", "Molsheim", "weber-auto.fr", 29, 0, 15, 14, "pas_interesse"],
+];
+
+export const mockProspects: Prospect[] = prospectRows.map(
+  ([created_at, prenom, nom, entreprise, metier, ville, site, score, ia, tech, google, statut], i) => ({
+    id: `prospect-${i + 1}`,
+    created_at,
+    prenom,
+    nom,
+    email: `contact@${site}`,
+    telephone: "06 00 00 00 0" + i,
+    entreprise,
+    metier,
+    ville,
+    site: `https://${site}/`,
+    score,
+    score_ia: ia,
+    score_technique: tech,
+    score_google: google,
+    statut,
+    utm: i === 0 ? { utm_source: "flyer", utm_medium: "qr" } : null,
+    rapport: {
+      score,
+      complet: true,
+      volets: [
+        { id: "ia", label: "Présence dans les réponses des IA", points: ia, max: 50, available: true },
+        { id: "technique", label: "Fondations techniques du site", points: tech, max: 30, available: true },
+        { id: "google", label: "Fiche Google", points: google, max: 20, available: true },
+      ],
+      priorities: [
+        { id: "robots-chatgpt", label: "Accès de ChatGPT au site", fix: "Autoriser OAI-SearchBot dans le fichier robots.txt." },
+        { id: "nap", label: "Nom, adresse et téléphone", fix: "Afficher l'adresse et le téléphone en texte sur le site." },
+        { id: "avis", label: "Avis Google", fix: "Demander un avis à chaque client satisfait." },
+      ],
+      ia: { competitors: [{ name: "Concurrent A (fictif)", count: 4 }, { name: "Concurrent B (fictif)", count: 2 }] },
+    },
+  }),
+);

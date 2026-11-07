@@ -9,7 +9,7 @@ import { ADMIN_NAV_ITEM, NAV_ITEMS } from "./nav-items";
 
 export function SidebarNav({ onNavigate, admin = false }: { onNavigate?: () => void; admin?: boolean }) {
   const pathname = usePathname();
-  const items = admin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
+  const items = admin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS.filter((item) => !item.adminOnly);
 
   return (
     <nav className="flex flex-col gap-1">

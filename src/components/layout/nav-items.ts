@@ -1,10 +1,12 @@
-import { FileText, Gauge, History, MessageSquareText, Settings2, ShieldCheck, type LucideIcon } from "lucide-react";
+import { FileText, Gauge, History, MessageSquareText, Settings2, ShieldCheck, UserPlus, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   href: string;
   label: string;
   description: string;
   icon: LucideIcon;
+  /** Visible seulement pour l'équipe Havnn (rôle havnn_admin). */
+  adminOnly?: boolean;
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -13,6 +15,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/audit-technique", label: "Structure & Factualité", description: "Les 4 piliers GEO", icon: ShieldCheck },
   { href: "/dashboard/journal", label: "Journal d'activité", description: "Toutes les actions HAVNN", icon: History },
   { href: "/dashboard/rapports", label: "Documents & Rapports", description: "Rapports & coffre-fort", icon: FileText },
+  { href: "/dashboard/prospects", label: "Prospects", description: "Tests de visibilité IA du site", icon: UserPlus, adminOnly: true },
 ];
 
 /** Entrée réservée aux consultants HAVNN. */
