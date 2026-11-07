@@ -5,7 +5,7 @@
  *   npx tsx scripts/scan.ts --mode=live --company=dgco-fermetures.com
  *   npx tsx scripts/scan.ts --mode=test --company=… --no-save  # essai sans rien enregistrer
  *   npx tsx scripts/scan.ts --mode=test --runs=1                # 1 passage par question (5 par défaut)
- *   npx tsx scripts/scan.ts --mode=live --skip-done             # saute les clients déjà relevés ce mois-ci
+ *   npx tsx scripts/scan.ts --mode=live --skip-done             # saute les clients relevés ces 3 derniers jours
  *
  * Variables : SUPABASE_URL (ou NEXT_PUBLIC_SUPABASE_URL), SUPABASE_SERVICE_ROLE_KEY,
  * OPENAI_API_KEY, GEMINI_API_KEY, et en option OPENAI_MODEL, GEMINI_MODEL, GEMINI_ANALYSIS_MODEL.

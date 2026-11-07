@@ -9,9 +9,9 @@ import { describe, it } from "node:test";
 import { analyzeAnswer, buildSnippet, cleanAnswer, findMentions, normalize, type BrandMatcher } from "./analyze";
 import { brandKey, brandsToAdd, discoverBrands } from "./discover";
 import { parseGemini, parseOpenAi } from "./engines";
-import { computeMetrics, dominanceScore, mainSnippet } from "./metrics";
+import { computeMetrics, dominanceScore, mainSnippet, worstEngineErrorRate } from "./metrics";
 import { aggregateRuns, citedRuns, isUncertain } from "./runs";
-import { scannedThisMonth } from "./run";
+import { scannedRecently } from "./run";
 import type { EngineResult, QuestionResult } from "./types";
 
 const brands: BrandMatcher[] = [
@@ -268,6 +268,16 @@ describe("passages multiples", () => {
       ],
     );
   });
+
+  it("mesure les erreurs moteur par moteur", () => {
+    const results: QuestionResult[] = [
+      { question: "q1", location_id: null, engines: { chatgpt: aggregateRuns([run("error", null), run("error", null)]), gemini: aggregateRuns([run("cited", 1), run("cited", 1)]) } },
+      { question: "q2", location_id: null, engines: { chatgpt: aggregateRuns([run("cited", 1), run("cited", 1)]), gemini: aggregateRuns([run("cited", 1), run("cited", 1)]) } },
+    ];
+    // ChatGPT : 2 erreurs sur 4 passages, alors que l'ensemble n'en compte que 2 sur 8.
+    assert.equal(worstEngineErrorRate(results), 0.5);
+    assert.equal(worstEngineErrorRate([]), 0);
+  });
 });
 
 describe("concurrents détectés", () => {
@@ -310,13 +320,13 @@ describe("concurrents détectés", () => {
 });
 
 describe("relevés de rattrapage", () => {
-  it("ne retient que les clients relevés depuis le 1er du mois", () => {
+  it("ne retient que les clients relevés ces 3 derniers jours", () => {
     const runs = [
-      { company_id: "a", created_at: "2026-10-27T10:07:00Z" },
-      { company_id: "b", created_at: "2026-09-27T05:00:00Z" },
-      { company_id: "c", created_at: "2026-10-01T00:00:00Z" },
+      { company_id: "a", created_at: "2026-11-27T10:07:00Z" },
+      { company_id: "b", created_at: "2026-11-07T10:00:00Z" },
+      { company_id: "c", created_at: "2026-11-25T05:00:00Z" },
     ];
-    assert.deepEqual([...scannedThisMonth(runs, new Date("2026-10-28T04:23:00Z"))].sort(), ["a", "c"]);
-    assert.equal(scannedThisMonth(runs, new Date("2026-11-27T04:23:00Z")).size, 0);
+    assert.deepEqual([...scannedRecently(runs, new Date("2026-11-28T04:23:00Z"))].sort(), ["a", "c"]);
+    assert.equal(scannedRecently(runs, new Date("2026-12-27T04:23:00Z")).size, 0);
   });
 });
