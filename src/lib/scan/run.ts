@@ -18,7 +18,7 @@ import type { Company, GeoScore, Location, NapCitation, TrackedBrand } from "@/t
 import { analyzeAnswer, findMentions, matchBrand, type BrandMatcher } from "./analyze";
 import { brandKey, brandsToAdd, discoverBrands } from "./discover";
 import type { AiClient } from "./engines";
-import { computeMetrics, mainSnippet } from "./metrics";
+import { computeMetrics, mainSnippet, worstEngineErrorRate } from "./metrics";
 import { aggregateRuns, citedRuns, isUncertain, type RunDetail } from "./runs";
 import type { QuestionResult, ScanEngine, ScanSummary } from "./types";
 
@@ -37,6 +37,8 @@ export interface RunOptions {
   runs?: number;
   /** Passages au maximum quand le résultat hésite (5 par défaut). */
   maxRuns?: number;
+  /** Saute les clients relevés en live ces 3 derniers jours (relevés planifiés de rattrapage). */
+  skipDone?: boolean;
   now?: () => Date;
   log?: (line: string) => void;
 }
@@ -48,7 +50,7 @@ export interface CompanyReport {
   detail?: string;
 }
 
-/** Au-delà de 25 % de réponses en erreur, un relevé live n'est pas publié dans le Cockpit. */
+/** Au-delà de 25 % de réponses en erreur sur un moteur, un relevé live n'est pas publié dans le Cockpit. */
 const MAX_ERROR_RATE = 0.25;
 const DEFAULT_MAX_QUESTIONS = 30;
 const DEFAULT_RUNS = 5;
@@ -70,6 +72,18 @@ async function pool<T, R>(items: T[], size: number, fn: (item: T, index: number)
 }
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+/** Fenêtre des rattrapages : un relevé live publié depuis moins de 3 jours compte comme le relevé du mois. */
+const CATCH_UP_WINDOW_MS = 3 * 24 * 3600 * 1000;
+
+/**
+ * Clients ayant déjà un relevé live publié (ok ou partiel) dans les 3 derniers jours. Un relevé lancé
+ * à la main plus tôt dans le mois n'empêche pas le relevé du 27.
+ */
+export function scannedRecently(runs: { company_id: string; created_at: string }[], now: Date): Set<string> {
+  const since = now.getTime() - CATCH_UP_WINDOW_MS;
+  return new Set(runs.filter((r) => new Date(r.created_at).getTime() >= since).map((r) => r.company_id));
+}
 
 export async function runScan(db: SupabaseClient, ai: AiClient, options: RunOptions): Promise<CompanyReport[]> {
   const log = options.log ?? console.log;
@@ -93,8 +107,25 @@ export async function runScan(db: SupabaseClient, ai: AiClient, options: RunOpti
     return [];
   }
 
+  let done = new Set<string>();
+  if (options.skipDone) {
+    const { data: runs, error: runsError } = await db
+      .from("scan_runs")
+      .select("company_id, created_at")
+      .eq("mode", "live")
+      .in("status", ["ok", "partial"])
+      .in("company_id", companies.map((c) => c.id));
+    if (runsError) throw new Error(`Lecture des relevés : ${runsError.message}`);
+    done = scannedRecently(runs ?? [], now());
+  }
+
   const reports: CompanyReport[] = [];
   for (const company of companies) {
+    if (done.has(company.id)) {
+      log(`⏭ ${company.name} : déjà relevé ces derniers jours`);
+      reports.push({ company: company.name, status: "skipped", detail: "déjà relevé ces derniers jours" });
+      continue;
+    }
     try {
       reports.push(await scanCompany(db, ai, company, options, now, log));
     } catch (e) {
@@ -242,7 +273,8 @@ async function scanCompany(
   const metrics = computeMetrics(results, brands, { googleRating, napConformity: nap.score });
 
   const totalAnswers = metrics.answers + metrics.errors;
-  const errorRate = totalAnswers ? metrics.errors / totalAnswers : 1;
+  // Un moteur presque muet (crédit épuisé, quota) fausserait le score même si l'autre a répondu.
+  const errorRate = totalAnswers ? worstEngineErrorRate(results) : 1;
   const status: CompanyReport["status"] = metrics.errors === 0 ? "ok" : errorRate <= MAX_ERROR_RATE ? "partial" : "error";
   const publish = options.mode === "live" && status !== "error";
 
@@ -269,7 +301,8 @@ async function scanCompany(
 
   // ------------------------------------------------------------------ Écritures
   const runAt = now().toISOString();
-  if (toAdd.length) {
+  // Un relevé en échec ne rajoute pas de concurrents : ils viendraient de réponses incomplètes.
+  if (toAdd.length && status !== "error") {
     const maxOrder = tracked.reduce((m, b) => Math.max(m, b.sort_order ?? 0), 0);
     const { error: brandError } = await db.from("tracked_brands").upsert(
       toAdd.map((d, i) => ({

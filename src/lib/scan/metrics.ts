@@ -111,3 +111,21 @@ export function mainSnippet(result: QuestionResult) {
     null
   );
 }
+
+/** Part de passages en erreur du moteur le plus touché (0 si aucun moteur interrogé). */
+export function worstEngineErrorRate(results: QuestionResult[]) {
+  let worst = 0;
+  for (const engine of SCAN_ENGINES) {
+    let total = 0;
+    let failed = 0;
+    for (const r of results) {
+      const result = r.engines[engine];
+      if (!result) continue;
+      const runs = runsOf(result);
+      total += runs.length;
+      failed += runs.filter((x) => x.status === "error").length;
+    }
+    if (total) worst = Math.max(worst, failed / total);
+  }
+  return worst;
+}

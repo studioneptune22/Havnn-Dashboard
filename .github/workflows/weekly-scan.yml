@@ -1,10 +1,15 @@
 name: Relevé ChatGPT et Gemini
 
-# Le 27 de chaque mois à 5 h UTC (6 h ou 7 h à Paris), dernière semaine du mois, et à la demande
-# depuis l'onglet Actions. Un relevé par mois suffit à mesurer les actions menées dans le mois.
+# Le 27 de chaque mois vers 5 h 30 à Paris, dernière semaine du mois, et à la demande depuis l'onglet
+# Actions. Un relevé par mois suffit à mesurer les actions menées dans le mois.
+# GitHub peut sauter un horaire planifié (affluence) : trois rattrapages suivent, qui ne relèvent que
+# les clients pas encore relevés ces 3 derniers jours (--skip-done). Minutes décalées de l'heure pile, la plus chargée.
 on:
   schedule:
-    - cron: "0 5 27 * *"
+    - cron: "23 4 27 * *"
+    - cron: "23 8 27 * *"
+    - cron: "23 13 27 * *"
+    - cron: "23 4 28 * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -41,10 +46,11 @@ jobs:
 
       - name: Relevé
         # Le relevé planifié (mensuel) suit la variable SCAN_MODE (test tant qu'elle n'est pas passée à live).
-        run: npx tsx scripts/scan.ts --mode="${MODE}" ${COMPANY:+--company="$COMPANY"}
+        run: npx tsx scripts/scan.ts --mode="${MODE}" ${COMPANY:+--company="$COMPANY"} ${SKIP_DONE:+--skip-done}
         env:
           MODE: ${{ inputs.mode || vars.SCAN_MODE || 'test' }}
           COMPANY: ${{ inputs.company }}
+          SKIP_DONE: ${{ github.event_name == 'schedule' && 'yes' || '' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
